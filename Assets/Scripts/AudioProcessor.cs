@@ -6,34 +6,48 @@ using UnityEngine;
 public class AudioProcessor : MonoBehaviour
 {
     
+    [SerializeField]
+    private Visualizer visualizer;
+
 	private AudioSource _audioSource;
 
-	public static float[] _samples = new float[512];
-    public static float[] _freqBand = new float[8];
+    float[] _spectrum = new float[512];
+    public float[] _freqBands;
 
-    // Start is called before the first frame update
-    void Start()
+    AudioHelper helper = new AudioHelper();
+
+
+    // int resolution
+
+    void OnEnable()
     {
         _audioSource = GetComponent<AudioSource> ();
-        float prevBand = 0f;
-        for( int i = 0; i < _freqBand.Length; i++)
-        {
-            _freqBand[i] = prevBand + 22050 / Mathf.Pow(2, _freqBand.Length - i); 
-            prevBand = _freqBand[i];
-        }
+        Initialize( visualizer.xResolution );
+        
+        Visualizer.resChangeEvent += Initialize;
+        
     }
 
-    void GetSpectrumAudioSource()
-	{
-		_audioSource.GetSpectrumData(_samples, 0, FFTWindow.Blackman);
-        for( int i = 0; i < _samples.Length ; i++ )
-        {
+    void OnDisable()
+    {
+        Visualizer.resChangeEvent -= Initialize;
+    }
 
-        }
+    void Initialize( int resolution)
+    {
+        _freqBands = new float[resolution];
+        // float prevBand = 0f;
+        // for( int i = 0; i < _freqBand.Length; i++)
+        // {
+        //     _freqBand[i] = prevBand + 22050 / Mathf.Pow(2, _freqBand.Length - i); 
+        //     prevBand = _freqBand[i];
+        // }
+    }
+
+    public float[] GetSpectrumAudioSource()
+	{
+		_audioSource.GetSpectrumData(_spectrum, 0, FFTWindow.Blackman);
+        return helper.ComputeFrequencyBands( _spectrum, _freqBands);
 	}
 
-    void GetSpectrumAtTime(float u, float v, float t)
-    {
-
-    }
 }

@@ -5,24 +5,23 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     [SerializeField, Range(0.01f, 0.5f)]
-    float moveSpeed = 0.1f;
+    float moveSpeed = 0.2f;
 
-    [SerializeField, Range(1f, 10f)]
+    [SerializeField, Range(0.5f, 5f)]
     float turnSpeed = 4.0f;
 
-    [SerializeField]
-    Transform player;
-    
-    [SerializeField]
-    float rotX = -45f;
+    float rotX = -30f;
 
-    [SerializeField]
-    float rotY = 36f;
-    
+    float rotY = 180f;
+
+    private bool rotating = false;
+
     private Vector3 moveVector;
 
     void Start()
     {
+        rotX = transform.localEulerAngles.x;
+        rotY = transform.localEulerAngles.y;
         moveVector = new Vector3(0, 0, 0);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -31,20 +30,13 @@ public class CameraController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire2"))
         {
-            if(Cursor.lockState == CursorLockMode.Locked)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }   
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;   
-                Cursor.visible = false; 
-            }
+            rotating = true;
+        //     Cursor.lockState = CursorLockMode.Locked;
+        //     Cursor.visible = false;            
         }
-        if( Cursor.lockState == CursorLockMode.Locked)
+        if (Input.GetButton("Fire2"))
         {
             // get the mouse inputs
             rotY += Input.GetAxis("Mouse X") * turnSpeed;
@@ -53,20 +45,28 @@ public class CameraController : MonoBehaviour
 
             var yRad = rotY * 2 * Mathf.PI / 360;
             var xRad = rotX * 2 * Mathf.PI / 360;
-        
-            float h = ( float ) Input.GetAxisRaw("Horizontal");
-            float v = ( float ) Input.GetAxisRaw("Vertical");
-            moveVector.x = v * Mathf.Sin( yRad )*Mathf.Cos( xRad ) + h * Mathf.Cos( yRad ); 
-            moveVector.y = v * Mathf.Sin( xRad );
-            moveVector.z = v * Mathf.Cos( yRad )*Mathf.Cos( xRad ) - h * Mathf.Sin( yRad );
-        }       
+
+            float h = (float)Input.GetAxisRaw("Horizontal");
+            float v = (float)Input.GetAxisRaw("Vertical");
+            moveVector.x = v * Mathf.Sin(yRad) * Mathf.Cos(xRad) + h * Mathf.Cos(yRad);
+            moveVector.y = v * Mathf.Sin(xRad);
+            moveVector.z = v * Mathf.Cos(yRad) * Mathf.Cos(xRad) - h * Mathf.Sin(yRad);
+        }
+        if (Input.GetButtonUp("Fire2"))
+        {
+        //     Cursor.lockState = CursorLockMode.None;
+        //     Cursor.visible = true;
+            rotating = false;
+
+        }
     }
 
     void FixedUpdate()
     {
-        player.position += moveSpeed * moveVector;
-        transform.localEulerAngles = new Vector3(-rotX, 0, 0);        
-        // rotate the camera
-        player.localEulerAngles = new Vector3(0, rotY, 0);
+        if( rotating )
+        {
+            transform.position += moveSpeed * moveVector;
+            transform.localEulerAngles = new Vector3(-rotX, rotY, 0);
+        }
     }
 }

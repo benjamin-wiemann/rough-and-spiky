@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,12 +6,18 @@ using UnityEngine;
 public class Visualizer : MonoBehaviour
 {
 
-    public enum CalculationMethod { CPU, GPU, Burst}
+    public enum CalculationMethod { CPU, GPU, Burst }
 
     const int maxResolution = 1000;
 
-    [SerializeField, Range(10, maxResolution)]
-    int resolution = 50;
+    [SerializeField, Range(8, maxResolution)]
+    public int xResolution = 8;
+
+    [SerializeField, Range(8, maxResolution)]
+    public int zResolution = 8;
+
+    [SerializeField, Range(0.5f, 10)]
+    float heightScale = 1f;
 
     [SerializeField]
     Mesh mesh;
@@ -24,77 +31,129 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     CalculationMethod calculationMethod;
 
+    [SerializeField]
+    AudioProcessor audioProcessor;
+
     ComputeBuffer positionsBuffer;
 
     Transform[] points;
 
+    // Event emitting on resolution change
+    public delegate void resChangeDelegate( int resolution );
+
+    public static event resChangeDelegate resChangeEvent;
+
     void OnEnable()
     {
-        switch( calculationMethod )
+        if (Application.isPlaying)
         {
-            case CalculationMethod.CPU:
-            float step = 2f / resolution;
-            var scale = Vector3.one * step;
-            points = new Transform[resolution * resolution];
-            for (int i = 0; i < points.Length; i++) {
-                Transform point = points[i] = Instantiate(pointPrefab);
-                point.localScale = scale;
-                point.SetParent(transform, false);
+            switch (calculationMethod)
+            {
+                case CalculationMethod.CPU:
+                    InitPointCPU();
+                    break;
+                case CalculationMethod.GPU:
+                    positionsBuffer = new ComputeBuffer(xResolution * zResolution, 3);
+                    break;
+                case CalculationMethod.Burst:
+                    break;
             }
-            points = new Transform[resolution * resolution];
-            break;
-            case CalculationMethod.GPU:
-            positionsBuffer = new ComputeBuffer(resolution * resolution, 3 );
-            break;
-            case CalculationMethod.Burst:
-            break;
-
         }
-            
-            
     }
 
     void OnDisable()
     {
-        if( positionsBuffer != null)
+        if (Application.isPlaying)
         {
-            positionsBuffer.Release();
-            positionsBuffer = null;
+            switch (calculationMethod)
+            {
+                case CalculationMethod.CPU:
+                    if(points != null)
+                    {
+                        for (int i = 0; i < points.Length; i++)
+                        {
+                            Destroy(points[i].gameObject);
+                        }
+                        points = null;
+                    }          
+                    break;
+                case CalculationMethod.GPU:
+                    positionsBuffer.Release();
+                    positionsBuffer = null;
+                    break;
+                case CalculationMethod.Burst:
+                    break;
+            }
         }
-        
+
     }
 
-    void OnValidate () {
-		if (enabled) {
-			OnDisable();
-			OnEnable();
-		}
-	}
+    void OnValidate()
+    {
+        if (enabled)
+        {
+            OnDisable();
+            OnEnable();
+        }
+    }
 
     // Update is called once per frame
     void Update()
     {
-        var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f/resolution));
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * resolution);
+        switch (calculationMethod)
+        {
+            case CalculationMethod.CPU:
+                UpdatePointPositionCPU();
+                break;
+            case CalculationMethod.GPU:
+                var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / xResolution));
+                Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, xResolution * zResolution);
+                break;
+            case CalculationMethod.Burst:
+                break;
+        }
     }
 
     void InitPointCPU()
     {
-
+        float step = 2f / xResolution;
+        var scale = Vector3.one * step;
+        points = new Transform[xResolution * zResolution];
+        for (int i = 0; i < points.Length; i++)
+        {
+            Transform point = points[i] = Instantiate(pointPrefab);
+            point.localScale = scale;
+            point.SetParent(transform, false);
+        }
     }
 
     void UpdatePointPositionCPU()
     {
-        float step = 2f / resolution;
-		float v = 0.5f * step - 1f;
-        for (int i = 0, x = 0, z = 0; i < points.Length; i++, x++) {
-			if (x == resolution) {
-				x = 0;
-				z += 1;
-				v = (z + 0.5f) * step - 1f;
-			}
-			float u = (x + 0.5f) * step - 1f;
-            points[i].localPosition = 
+        float step = 2f / xResolution;
+        float z = 0.5f * step - 1f;
+        
+        float[] spectrum = audioProcessor.GetSpectrumAudioSource();
+        for (int i = 0, j = 0; i < points.Length; i++, j++)
+        {
+            if (j == xResolution)
+            {
+                j = 0;
+                z += step;
+            }
+
+            float x = (j + 0.5f) * step - 1f;
+            float y;
+            if (i >= points.Length - xResolution)
+            {
+                // add new spectrum
+                y = heightScale * spectrum[j];
+            }
+            else
+            {
+                y = points[i+xResolution].localPosition.y;
+            }
+            
+            points[i].localPosition = new Vector3(x, y, z);
         }
 
     }
