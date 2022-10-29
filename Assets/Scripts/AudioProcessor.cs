@@ -9,9 +9,14 @@ public class AudioProcessor : MonoBehaviour
     [SerializeField]
     private Visualizer visualizer;
 
+    [SerializeField]
+    private AudioHelper.InterpolationType interpolation = AudioHelper.InterpolationType.Linear;
+
 	private AudioSource _audioSource;
 
-    float[] _spectrum = new float[512];
+    private float[] _spectrum = new float[512];
+
+    private float[] _freqBandIndices;
     public float[] _freqBands;
 
     AudioHelper helper = new AudioHelper();
@@ -36,18 +41,13 @@ public class AudioProcessor : MonoBehaviour
     void Initialize( int resolution)
     {
         _freqBands = new float[resolution];
-        // float prevBand = 0f;
-        // for( int i = 0; i < _freqBand.Length; i++)
-        // {
-        //     _freqBand[i] = prevBand + 22050 / Mathf.Pow(2, _freqBand.Length - i); 
-        //     prevBand = _freqBand[i];
-        // }
+        _freqBandIndices = helper.ComputeFrequencyBandIndices(_spectrum.Length, resolution);
     }
 
     public float[] GetSpectrumAudioSource()
 	{
-		_audioSource.GetSpectrumData(_spectrum, 0, FFTWindow.Blackman);
-        return helper.ComputeFrequencyBands( _spectrum, _freqBands);
+		_audioSource.GetSpectrumData( _spectrum, 0, FFTWindow.Blackman );        
+        return helper.ComputeFrequencyBands( _spectrum, _freqBandIndices, interpolation );
 	}
 
 }

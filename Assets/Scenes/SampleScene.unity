@@ -451,6 +451,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   visualizer: {fileID: 2046193656}
+  _freqBands: []
 --- !u!82 &1997742422
 AudioSource:
   m_ObjectHideFlags: 0
@@ -463,7 +464,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 83a7ccf95d925b843b9ed244ac193e64, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.469
   m_Pitch: 1
   Loop: 0
   Mute: 0

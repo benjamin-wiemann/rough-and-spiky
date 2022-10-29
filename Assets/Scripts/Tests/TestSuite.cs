@@ -6,20 +6,45 @@ using UnityEngine.TestTools;
 
 public class TestSuite
 {
-    // A Test behaves as an ordinary method
+
     [Test]
-    public void TestSuiteSimplePasses()
+    public void ComputeFrequencyBandIndices()
     {
+        AudioHelper helper = new AudioHelper();
+        int rawSpectrumLength = 4;
+        int numBands = 3;        
+        float[] testIndices = new float[]{ 0f, 0.59f, 1.52f, 3f};
+        float[] indices = helper.ComputeFrequencyBandIndices( rawSpectrumLength, numBands );
+        Assert.That( indices, Is.EqualTo( testIndices ).Within(0.01));       
         
     }
 
-    // // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    // // `yield return null;` to skip a frame.
-    // [UnityTest]
-    // public IEnumerator TestSuiteWithEnumeratorPasses()
-    // {
-    //     // Use the Assert class to test conditions.
-    //     // Use yield to skip a frame.
-    //     yield return null;
-    // }
+    [Test]
+    public void ComputeFrequencyBandAmplitudesWithIntegerIndices()
+    {
+        AudioHelper helper = new AudioHelper();
+        
+        float[] linearSpectrum= new float[]{
+             1f,1f,1f,1f,1f,1f,1f,1f
+        }; 
+        float[] integerIndices = new float[]{ 0f, 1f, 3f, 7f};
+        float[] bands = helper.ComputeFrequencyBands( linearSpectrum, integerIndices, AudioHelper.InterpolationType.Linear );
+        Assert.That( bands, Is.EqualTo( new float[3]{1f, 1f, 1f} ) );
+
+    }
+
+    [Test]
+    public void ComputeFrequencyBandAmplitudesWithFloatIndices()
+    {
+        AudioHelper helper = new AudioHelper();
+       
+        float[] linearSpectrum= new float[]{
+            1f,1f,1f,1f
+        };     
+        float[] testIndices = new float[]{ 0f, 0.59f, 1.52f, 3f};
+        float[] bands = helper.ComputeFrequencyBands( linearSpectrum, testIndices, AudioHelper.InterpolationType.Linear );
+        Assert.That( bands, Is.EqualTo( new float[3]{1f, 1f, 1f} ) );
+
+    }
+
 }
