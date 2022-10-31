@@ -27,17 +27,17 @@ public class AudioHelper
             float average = interpolatedAmplitude * ( 1- delta);    
             indexInterval = 1 - delta;        
             
-            for( int j = (int) Mathf.Ceil(indices[i]); j < indices[i+1]; j++)
+            for( int j = (int) Mathf.Ceil(indices[i]); j < indices[i+1] && indices[i+1] - j >= 1; j++)
             {
                 average += spectrum[j];
                 indexInterval++;
             }
-            // Interpolate amplitude at _indices[i]
-            if( i < indices.Length - 1 && Mathf.Ceil( indices[i]) != indices[i] )
+            // Interpolate value at _indices[i+1]
+            if( Mathf.Ceil( indices[i+1]) != indices[i+1] )
             {
-                int lowerIndex = (int) Mathf.Floor( indices[i] );
-                int upperIndex = (int) Mathf.Ceil( indices[i] );
-                delta = indices[i] - lowerIndex;
+                int lowerIndex = (int) Mathf.Floor( indices[i+1] );
+                int upperIndex = (int) Mathf.Ceil( indices[i+1] );
+                delta = indices[i+1] - lowerIndex;
                 interpolatedAmplitude = Interpolate( spectrum[lowerIndex], spectrum[upperIndex],  delta, interpolation);
                 average += interpolatedAmplitude * delta;
                 indexInterval += delta;

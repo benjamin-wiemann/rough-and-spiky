@@ -29,8 +29,7 @@ public class AudioProcessor : MonoBehaviour
         _audioSource = GetComponent<AudioSource> ();
         Initialize( visualizer.xResolution );
         
-        Visualizer.resChangeEvent += Initialize;
-        
+        Visualizer.resChangeEvent += Initialize;        
     }
 
     void OnDisable()
@@ -46,7 +45,7 @@ public class AudioProcessor : MonoBehaviour
 
     public float[] GetSpectrumAudioSource()
 	{
-		_audioSource.GetSpectrumData( _spectrum, 0, FFTWindow.Blackman );        
+		_audioSource.GetSpectrumData( _spectrum, 0, FFTWindow.BlackmanHarris );        
         return helper.ComputeFrequencyBands( _spectrum, _freqBandIndices, interpolation );
 	}
 

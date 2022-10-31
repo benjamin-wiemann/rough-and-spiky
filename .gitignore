@@ -8,3 +8,5 @@ Build/
 .idea/
 .vscode/
 UserSettings
+**/InitTestScene*
+Assets/Audio/*

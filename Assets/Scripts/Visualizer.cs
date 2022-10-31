@@ -16,8 +16,14 @@ public class Visualizer : MonoBehaviour
     [SerializeField, Range(8, maxResolution)]
     public int zResolution = 8;
 
-    [SerializeField, Range(0.5f, 10)]
-    float heightScale = 1f;
+    // [SerializeField, Range(1f, 20f)]
+    // float heightScale = 5f;
+
+    [SerializeField, Range(0.001f, 0.1f)]
+    float heightScale = 0.01f;
+
+    [SerializeField]
+    float minHeight = 0.0001f;
 
     [SerializeField]
     Mesh mesh;
@@ -97,8 +103,7 @@ public class Visualizer : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         switch (calculationMethod)
         {
@@ -145,8 +150,8 @@ public class Visualizer : MonoBehaviour
             float y;
             if (i >= points.Length - xResolution)
             {
-                // add new spectrum
-                y = heightScale * spectrum[j];
+                y = heightScale * 20 * Mathf.Log( spectrum[j], 10);
+                
             }
             else
             {
