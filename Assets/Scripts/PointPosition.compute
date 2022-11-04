@@ -1,0 +1,32 @@
+#pragma kernel SpectrumVisualizer
+
+RWStructuredBuffer<float> _FrequencyBands;
+RWStructuredBuffer<float3> _Positions;
+
+
+float _DeltaTime;
+float _Step;
+uint _Resolution;
+
+float2 GetXZ (uint3 id) {
+	return (id.xy + 0.5) * _Step - 1.0;
+}
+
+void SetPosition (uint3 id, float3 position) {
+	if (id.x < _Resolution && id.y < _Resolution) {
+		_Positions[id.x + id.y * _Resolution] = position;
+	}
+}
+
+[numthreads(8, 8, 1)]
+void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
+{
+	float2 uv = GetXZ(id);
+	float3 p;
+	p.x = uv.x; //uv.x;
+	p.z = uv.y; //uv.y;
+	p.y = _FrequencyBands[id.x];
+	
+	SetPosition(id, p);
+}
+

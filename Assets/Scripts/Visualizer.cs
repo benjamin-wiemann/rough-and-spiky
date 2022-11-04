@@ -11,10 +11,10 @@ public class Visualizer : MonoBehaviour
     const int maxResolution = 1000;
 
     [SerializeField, Range(8, maxResolution)]
-    public int xResolution = 8;
+    public int resolution = 8;
 
     [SerializeField, Range(8, maxResolution)]
-    public int zResolution = 8;
+    public int depth = 8;
 
     // [SerializeField, Range(1f, 20f)]
     // float heightScale = 5f;
@@ -22,8 +22,8 @@ public class Visualizer : MonoBehaviour
     [SerializeField, Range(0.001f, 0.1f)]
     float heightScale = 0.01f;
 
-    [SerializeField]
-    float minHeight = 0.0001f;
+    [SerializeField, Range(20, 200)]
+    float speed = 60;
 
     [SerializeField]
     Mesh mesh;
@@ -40,14 +40,22 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     AudioProcessor audioProcessor;
 
+    [SerializeField]
+    ComputeShader computeShader;
+
+    ComputeBuffer freqBandsBuffer;
+
     ComputeBuffer positionsBuffer;
 
+    static readonly int
+		positionsId = Shader.PropertyToID("_Positions"),
+        frequencyBandsId = Shader.PropertyToID("_FrequencyBands"),
+		resolutionId = Shader.PropertyToID("_Resolution"),
+		stepId = Shader.PropertyToID("_Step"),
+		deltaTimeId = Shader.PropertyToID("_DeltaTime");
+
+
     Transform[] points;
-
-    // Event emitting on resolution change
-    public delegate void resChangeDelegate( int resolution );
-
-    public static event resChangeDelegate resChangeEvent;
 
     void OnEnable()
     {
@@ -59,7 +67,8 @@ public class Visualizer : MonoBehaviour
                     InitPointCPU();
                     break;
                 case CalculationMethod.GPU:
-                    positionsBuffer = new ComputeBuffer(xResolution * zResolution, 3);
+                    positionsBuffer = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
+                    freqBandsBuffer = new ComputeBuffer(resolution, 4);
                     break;
                 case CalculationMethod.Burst:
                     break;
@@ -74,18 +83,26 @@ public class Visualizer : MonoBehaviour
             switch (calculationMethod)
             {
                 case CalculationMethod.CPU:
-                    if(points != null)
+                    if (points != null)
                     {
                         for (int i = 0; i < points.Length; i++)
                         {
                             Destroy(points[i].gameObject);
                         }
                         points = null;
-                    }          
+                    }
                     break;
                 case CalculationMethod.GPU:
-                    positionsBuffer.Release();
-                    positionsBuffer = null;
+                    if ( positionsBuffer != null)
+                    {
+                        positionsBuffer.Release();
+                        positionsBuffer = null;
+                    }
+                    if ( freqBandsBuffer != null )
+                    {
+                        freqBandsBuffer.Release();
+                        freqBandsBuffer = null;                    
+                    }
                     break;
                 case CalculationMethod.Burst:
                     break;
@@ -94,16 +111,16 @@ public class Visualizer : MonoBehaviour
 
     }
 
-    void OnValidate()
-    {
-        if (enabled)
-        {
-            OnDisable();
-            OnEnable();
-        }
-    }
+    // void OnValidate()
+    // {
+    //     if (enabled)
+    //     {
+    //         OnDisable();
+    //         OnEnable();
+    //     }
+    // }
 
-    void FixedUpdate()
+    void Update()
     {
         switch (calculationMethod)
         {
@@ -111,8 +128,7 @@ public class Visualizer : MonoBehaviour
                 UpdatePointPositionCPU();
                 break;
             case CalculationMethod.GPU:
-                var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / xResolution));
-                Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, xResolution * zResolution);
+                UpdatePointPositionGPU();
                 break;
             case CalculationMethod.Burst:
                 break;
@@ -121,26 +137,51 @@ public class Visualizer : MonoBehaviour
 
     void InitPointCPU()
     {
-        float step = 2f / xResolution;
+        float step = 2f / resolution;
         var scale = Vector3.one * step;
-        points = new Transform[xResolution * zResolution];
+        points = new Transform[resolution * depth];
         for (int i = 0; i < points.Length; i++)
         {
             Transform point = points[i] = Instantiate(pointPrefab);
             point.localScale = scale;
             point.SetParent(transform, false);
         }
+        audioProcessor.Initialize(resolution);
+    }
+
+    void UpdatePointPositionGPU()
+    {
+        int kernelHandle = computeShader.FindKernel("SpectrumVisualizer");
+
+        float step = 2f / resolution;
+		computeShader.SetInt(resolutionId, resolution);
+		computeShader.SetFloat(stepId, step);
+		computeShader.SetFloat(deltaTimeId, Time.deltaTime);
+        float[] spectrum = audioProcessor.GetSpectrumAudioSource();
+        freqBandsBuffer.SetData(spectrum);
+
+        computeShader.SetBuffer(kernelHandle, positionsId, positionsBuffer);
+        computeShader.SetBuffer(kernelHandle, frequencyBandsId, freqBandsBuffer);
+
+        int groupsX = Mathf.CeilToInt( resolution / 8f );
+        int groupsY = Mathf.CeilToInt( depth / 8f);
+		computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
+        
+        material.SetBuffer(positionsId, positionsBuffer);
+		material.SetFloat(stepId, step);
+        var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
     }
 
     void UpdatePointPositionCPU()
     {
-        float step = 2f / xResolution;
+        float step = 2f / resolution;
         float z = 0.5f * step - 1f;
-        
+
         float[] spectrum = audioProcessor.GetSpectrumAudioSource();
         for (int i = 0, j = 0; i < points.Length; i++, j++)
         {
-            if (j == xResolution)
+            if (j == resolution)
             {
                 j = 0;
                 z += step;
@@ -148,17 +189,27 @@ public class Visualizer : MonoBehaviour
 
             float x = (j + 0.5f) * step - 1f;
             float y;
-            if (i >= points.Length - xResolution)
+            if (i >= points.Length - resolution)
             {
-                y = heightScale * 20 * Mathf.Log( spectrum[j], 10);
-                
+                y = heightScale * 20 * Mathf.Log(spectrum[j], 10);
             }
             else
             {
-                y = points[i+xResolution].localPosition.y;
+                float timeSensitiveFactor = i + Time.deltaTime * speed;
+                int upperFactor = (int) Mathf.Ceil(timeSensitiveFactor);
+                int lowerFactor = (int) Mathf.Floor(timeSensitiveFactor);
+                float delta = timeSensitiveFactor - lowerFactor;
+                if( i + upperFactor * resolution <= points.Length )
+                {
+                    y = points[i + upperFactor * resolution].localPosition.y * delta + points[i + lowerFactor * resolution].localPosition.y * (1 - delta);
+                }
+                else
+                {   
+                    y = points[i + resolution].localPosition.y;
+                }
             }
-            
-            points[i].localPosition = new Vector3(x, y, z);
+
+            points[i].localPosition = new Vector3(x, y, z); 
         }
 
     }

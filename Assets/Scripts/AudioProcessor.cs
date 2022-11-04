@@ -27,17 +27,15 @@ public class AudioProcessor : MonoBehaviour
     void OnEnable()
     {
         _audioSource = GetComponent<AudioSource> ();
-        Initialize( visualizer.xResolution );
-        
-        Visualizer.resChangeEvent += Initialize;        
+        Initialize( visualizer.resolution );           
     }
 
     void OnDisable()
     {
-        Visualizer.resChangeEvent -= Initialize;
+        
     }
 
-    void Initialize( int resolution)
+    public void Initialize( int resolution)
     {
         _freqBands = new float[resolution];
         _freqBandIndices = helper.ComputeFrequencyBandIndices(_spectrum.Length, resolution);
