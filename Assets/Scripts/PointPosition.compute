@@ -2,18 +2,21 @@
 
 RWStructuredBuffer<float> _FrequencyBands;
 RWStructuredBuffer<float3> _Positions;
+RWStructuredBuffer<float3> _PrevPositions;
 
 
-float _DeltaTime;
+int _IndexOffset;
 float _Step;
+float _HeightScale;
 uint _Resolution;
+uint _Depth;
 
-float2 GetXZ (uint3 id) {
+float2 GetUV (uint3 id) {
 	return (id.xy + 0.5) * _Step - 1.0;
 }
 
 void SetPosition (uint3 id, float3 position) {
-	if (id.x < _Resolution && id.y < _Resolution) {
+	if (id.x < _Resolution && id.y < _Depth) {
 		_Positions[id.x + id.y * _Resolution] = position;
 	}
 }
@@ -21,12 +24,25 @@ void SetPosition (uint3 id, float3 position) {
 [numthreads(8, 8, 1)]
 void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 {
-	float2 uv = GetXZ(id);
-	float3 p;
-	p.x = uv.x; //uv.x;
-	p.z = uv.y; //uv.y;
-	p.y = _FrequencyBands[id.x];
+
+	float2 uv = GetUV(id);
+	float y = 0;
+
+	if (id.y >= _Depth - 1)
+	{
+		y = _HeightScale * 20 * log10(_FrequencyBands[id.x]);
+	}
+	else
+	{
+		// int upperIndex = clamp((int) ceil(timeSensitiveFactor), id.y, _Depth -1);
+		// int lowerIndex = clamp((int) floor(timeSensitiveFactor), id.y, _Depth - 1);
+		// float delta = timeSensitiveFactor - lowerIndex;
+		// y = lerp( _PrevPositions[id.x + lowerIndex * _Resolution].y, _PrevPositions[ id.x + upperIndex * _Resolution].y, delta);		
+		int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth - 1);
+		y = _PrevPositions[id.x +  clampedIndex * _Resolution].y;	
+
+	}
 	
-	SetPosition(id, p);
+	SetPosition(id, float3(uv.x, y, uv.y)); 	
 }
 

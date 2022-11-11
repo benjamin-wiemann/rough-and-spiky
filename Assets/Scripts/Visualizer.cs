@@ -23,7 +23,7 @@ public class Visualizer : MonoBehaviour
     float heightScale = 0.01f;
 
     [SerializeField, Range(20, 200)]
-    float speed = 60;
+    int speed = 60;
 
     [SerializeField]
     Mesh mesh;
@@ -45,30 +45,58 @@ public class Visualizer : MonoBehaviour
 
     ComputeBuffer freqBandsBuffer;
 
-    ComputeBuffer positionsBuffer;
+    ComputeBuffer positionsBufferA;
+
+    ComputeBuffer positionsBufferB;
+
+    float cumulatedDeltaTime = 0;
+
+    enum ReadFromBuffer{
+        A,
+        B
+    }
+
+    ReadFromBuffer readFromBuffer = ReadFromBuffer.A;
+
+    float[] spectrum ;
 
     static readonly int
 		positionsId = Shader.PropertyToID("_Positions"),
+        prevPositionsId = Shader.PropertyToID("_PrevPositions"),
         frequencyBandsId = Shader.PropertyToID("_FrequencyBands"),
 		resolutionId = Shader.PropertyToID("_Resolution"),
 		stepId = Shader.PropertyToID("_Step"),
-		deltaTimeId = Shader.PropertyToID("_DeltaTime");
+        indexOffsetId = Shader.PropertyToID("_IndexOffset"),
+        depthId = Shader.PropertyToID("_Depth"),
+        heightId = Shader.PropertyToID("_HeightScale");
+
 
 
     Transform[] points;
+
+    void Start()
+    {
+        positionsBufferA = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
+        positionsBufferB = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
+        freqBandsBuffer = new ComputeBuffer( maxResolution, 4);
+    } 
+
 
     void OnEnable()
     {
         if (Application.isPlaying)
         {
+            spectrum = new float[resolution];
+            audioProcessor.Initialize(resolution);
             switch (calculationMethod)
             {
                 case CalculationMethod.CPU:
                     InitPointCPU();
                     break;
                 case CalculationMethod.GPU:
-                    positionsBuffer = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
-                    freqBandsBuffer = new ComputeBuffer(resolution, 4);
+                    // positionsBufferA = new ComputeBuffer(resolution * depth, 3 * 4);
+                    // positionsBufferB = new ComputeBuffer(resolution * depth, 3 * 4);
+                    // freqBandsBuffer = new ComputeBuffer(resolution, 4);
                     break;
                 case CalculationMethod.Burst:
                     break;
@@ -93,17 +121,22 @@ public class Visualizer : MonoBehaviour
                     }
                     break;
                 case CalculationMethod.GPU:
-                    if ( positionsBuffer != null)
-                    {
-                        positionsBuffer.Release();
-                        positionsBuffer = null;
-                    }
-                    if ( freqBandsBuffer != null )
-                    {
-                        freqBandsBuffer.Release();
-                        freqBandsBuffer = null;                    
-                    }
-                    break;
+                    // if ( positionsBufferA != null)
+                    // {
+                    //     positionsBufferA.Release();
+                    //     positionsBufferA = null;
+                    // }
+                    // if ( positionsBufferB != null)
+                    // {
+                    //     positionsBufferB.Release();
+                    //     positionsBufferB = null;
+                    // }
+                    // if ( freqBandsBuffer != null )
+                    // {
+                    //     freqBandsBuffer.Release();
+                    //     freqBandsBuffer = null;                    
+                    // }
+                    // break;
                 case CalculationMethod.Burst:
                     break;
             }
@@ -111,14 +144,14 @@ public class Visualizer : MonoBehaviour
 
     }
 
-    // void OnValidate()
-    // {
-    //     if (enabled)
-    //     {
-    //         OnDisable();
-    //         OnEnable();
-    //     }
-    // }
+    void OnValidate()
+    {
+        if (enabled)
+        {
+            OnDisable();
+            OnEnable();
+        }
+    }
 
     void Update()
     {
@@ -133,6 +166,11 @@ public class Visualizer : MonoBehaviour
             case CalculationMethod.Burst:
                 break;
         }
+    }
+
+    void FixedUpdate()
+    {
+        spectrum = audioProcessor.GetSpectrumAudioSource();
     }
 
     void InitPointCPU()
@@ -151,26 +189,55 @@ public class Visualizer : MonoBehaviour
 
     void UpdatePointPositionGPU()
     {
+        
         int kernelHandle = computeShader.FindKernel("SpectrumVisualizer");
 
         float step = 2f / resolution;
+        cumulatedDeltaTime += speed * Time.deltaTime;
+        
 		computeShader.SetInt(resolutionId, resolution);
 		computeShader.SetFloat(stepId, step);
-		computeShader.SetFloat(deltaTimeId, Time.deltaTime);
-        float[] spectrum = audioProcessor.GetSpectrumAudioSource();
+		computeShader.SetInt(indexOffsetId, Mathf.FloorToInt(cumulatedDeltaTime));
+		computeShader.SetInt(depthId, depth);
+		computeShader.SetFloat(heightId, heightScale);
+
         freqBandsBuffer.SetData(spectrum);
 
-        computeShader.SetBuffer(kernelHandle, positionsId, positionsBuffer);
+        if( readFromBuffer == ReadFromBuffer.A )
+        {
+            computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferA);
+            computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferB);
+        }
+        else
+        {
+            computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferB);
+            computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferA);
+        }
         computeShader.SetBuffer(kernelHandle, frequencyBandsId, freqBandsBuffer);
 
         int groupsX = Mathf.CeilToInt( resolution / 8f );
         int groupsY = Mathf.CeilToInt( depth / 8f);
 		computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
         
-        material.SetBuffer(positionsId, positionsBuffer);
+        if( readFromBuffer == ReadFromBuffer.A )
+        {
+            material.SetBuffer(positionsId, positionsBufferB);
+            readFromBuffer = ReadFromBuffer.B;
+        }
+        else
+        {
+            material.SetBuffer(positionsId, positionsBufferA);
+            readFromBuffer = ReadFromBuffer.A;
+        }
+        
 		material.SetFloat(stepId, step);
         var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
         Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
+        
+        if( cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
+        {
+            cumulatedDeltaTime -= Mathf.FloorToInt(cumulatedDeltaTime);             
+        }
     }
 
     void UpdatePointPositionCPU()
@@ -178,7 +245,6 @@ public class Visualizer : MonoBehaviour
         float step = 2f / resolution;
         float z = 0.5f * step - 1f;
 
-        float[] spectrum = audioProcessor.GetSpectrumAudioSource();
         for (int i = 0, j = 0; i < points.Length; i++, j++)
         {
             if (j == resolution)

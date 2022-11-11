@@ -27,7 +27,6 @@ public class CameraController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (Input.GetButtonDown("Fire2"))
