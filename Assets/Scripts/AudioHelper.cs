@@ -38,7 +38,7 @@ public class AudioHelper
                 int lowerIndex = (int) Mathf.Floor( indices[i+1] );
                 int upperIndex = (int) Mathf.Ceil( indices[i+1] );
                 delta = indices[i+1] - lowerIndex;
-                interpolatedAmplitude = Interpolate( spectrum[lowerIndex], spectrum[upperIndex],  delta, interpolation);
+                interpolatedAmplitude = Mathf.SmoothStep( spectrum[lowerIndex], spectrum[upperIndex],  delta); 
                 average += interpolatedAmplitude * delta;
                 indexInterval += delta;
             }
@@ -59,15 +59,6 @@ public class AudioHelper
              indices[i] = Mathf.Pow(2, expStepFactor * i ) - 1;
         }
         return indices;
-    }
-
-    private float Interpolate(float left, float right, float delta, InterpolationType interpolation)
-    {
-        if( interpolation == InterpolationType.Linear)
-        {
-            return left * delta + right * (1-delta);
-        }
-        return 0f;
     }
 
 }

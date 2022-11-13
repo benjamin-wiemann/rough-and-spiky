@@ -144,6 +144,25 @@ public class Visualizer : MonoBehaviour
 
     }
 
+    void OnApplicationQuit()
+    {
+        if ( positionsBufferA != null)
+        {
+            positionsBufferA.Release();
+            positionsBufferA = null;
+        }
+        if ( positionsBufferB != null)
+        {
+            positionsBufferB.Release();
+            positionsBufferB = null;
+        }
+        if ( freqBandsBuffer != null )
+        {
+            freqBandsBuffer.Release();
+            freqBandsBuffer = null;                    
+        }
+    }
+
     void OnValidate()
     {
         if (enabled)
