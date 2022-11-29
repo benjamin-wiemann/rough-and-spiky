@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GPUController
+public class GPUPointController
 {
 
     ComputeBuffer freqBandsBuffer;
@@ -29,14 +29,14 @@ public class GPUController
     depthId = Shader.PropertyToID("_Depth"),
     heightId = Shader.PropertyToID("_HeightScale");
 
-    public GPUController(int maxResolution)
+    public GPUPointController( int maxResolution )
     {
         positionsBufferA = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
         positionsBufferB = new ComputeBuffer(maxResolution * maxResolution, 3 * 4);
         freqBandsBuffer = new ComputeBuffer(maxResolution, 4);
     }
 
-    ~GPUController()
+    public void ReleaseBuffers()
     {
         if (positionsBufferA != null)
         {

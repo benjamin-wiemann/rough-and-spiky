@@ -44,7 +44,8 @@ public class AudioProcessor : MonoBehaviour
     public float[] GetSpectrumAudioSource()
 	{
 		_audioSource.GetSpectrumData( _spectrum, 0, FFTWindow.BlackmanHarris );        
-        return helper.ComputeFrequencyBands( _spectrum, _freqBandIndices, interpolation );
+        _freqBands = helper.ComputeFrequencyBands( _spectrum, _freqBandIndices, interpolation );
+        return helper.ConvertToDb( _freqBands );
 	}
 
 }

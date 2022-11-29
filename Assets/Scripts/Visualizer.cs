@@ -6,7 +6,7 @@ using UnityEngine;
 public class Visualizer : MonoBehaviour
 {
 
-    public enum CalculationMethod { CPU, GPU, Burst }
+    public enum CalculationMethod { CPU, GPU }
 
     const int maxResolution = 1000;
 
@@ -15,9 +15,6 @@ public class Visualizer : MonoBehaviour
 
     [SerializeField, Range(8, maxResolution)]
     public int depth = 8;
-
-    // [SerializeField, Range(1f, 20f)]
-    // float heightScale = 5f;
 
     [SerializeField, Range(0.001f, 0.1f)]
     float heightScale = 0.01f;
@@ -43,7 +40,9 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     AudioProcessor audioProcessor;
 
-    GPUController gpuController;
+    GPUPointController gpuController;
+
+    CPUPointController cpuController;
 
     float[] spectrum ;
 
@@ -51,7 +50,7 @@ public class Visualizer : MonoBehaviour
 
     void Start()
     {
-        gpuController = new GPUController( maxResolution);
+        
     } 
 
 
@@ -60,16 +59,14 @@ public class Visualizer : MonoBehaviour
         if (Application.isPlaying)
         {
             spectrum = new float[resolution];
-            audioProcessor.Initialize(resolution);
+            audioProcessor.Initialize(resolution);            
             switch (calculationMethod)
             {
                 case CalculationMethod.CPU:
-                    InitPointCPU();
+                    cpuController = new CPUPointController( resolution, depth );
                     break;
                 case CalculationMethod.GPU:
-                    
-                    break;
-                case CalculationMethod.Burst:
+                    gpuController = new GPUPointController( maxResolution);
                     break;
             }
         }
@@ -79,23 +76,15 @@ public class Visualizer : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-            switch (calculationMethod)
+            if( gpuController != null)
             {
-                case CalculationMethod.CPU:
-                    if (points != null)
-                    {
-                        for (int i = 0; i < points.Length; i++)
-                        {
-                            Destroy(points[i].gameObject);
-                        }
-                        points = null;
-                    }
-                    break;
-                case CalculationMethod.GPU:
-                    break;
-                case CalculationMethod.Burst:
-                    break;
+                gpuController.ReleaseBuffers();
             }
+            if( cpuController != null)
+            {
+                cpuController.ReleaseBuffers();
+            }
+            
         }
 
     }
@@ -114,12 +103,10 @@ public class Visualizer : MonoBehaviour
         switch (calculationMethod)
         {
             case CalculationMethod.CPU:
-                UpdatePointPositionCPU();
+                cpuController.UpdatePointPosition( resolution, depth, speed, heightScale, spectrum, material, mesh);
                 break;
             case CalculationMethod.GPU:
                 gpuController.UpdatePointPosition( computeShader, resolution, depth, speed, heightScale, spectrum, material, mesh);
-                break;
-            case CalculationMethod.Burst:
                 break;
         }
     }
@@ -144,44 +131,4 @@ public class Visualizer : MonoBehaviour
     }
 
 
-
-    void UpdatePointPositionCPU()
-    {
-        float step = 2f / resolution;
-        float z = 0.5f * step - 1f;
-
-        for (int i = 0, j = 0; i < points.Length; i++, j++)
-        {
-            if (j == resolution)
-            {
-                j = 0;
-                z += step;
-            }
-
-            float x = (j + 0.5f) * step - 1f;
-            float y;
-            if (i >= points.Length - resolution)
-            {
-                y = heightScale * 20 * Mathf.Log(spectrum[j], 10);
-            }
-            else
-            {
-                float timeSensitiveFactor = i + Time.deltaTime * speed;
-                int upperFactor = (int) Mathf.Ceil(timeSensitiveFactor);
-                int lowerFactor = (int) Mathf.Floor(timeSensitiveFactor);
-                float delta = timeSensitiveFactor - lowerFactor;
-                if( i + upperFactor * resolution <= points.Length )
-                {
-                    y = points[i + upperFactor * resolution].localPosition.y * delta + points[i + lowerFactor * resolution].localPosition.y * (1 - delta);
-                }
-                else
-                {   
-                    y = points[i + resolution].localPosition.y;
-                }
-            }
-
-            points[i].localPosition = new Vector3(x, y, z); 
-        }
-
-    }
 }

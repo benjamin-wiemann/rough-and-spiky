@@ -61,4 +61,14 @@ public class AudioHelper
         return indices;
     }
 
+    public float[] ConvertToDb( float[] signal)
+    {
+        float[] dbSignal = new float[signal.Length];
+        for ( int i=0; i < signal.Length; i++)
+        {
+            dbSignal[i] = 20 * Mathf.Log10( signal[i] );
+        }
+        return dbSignal;
+    } 
+
 }
