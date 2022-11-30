@@ -1,6 +1,5 @@
 #pragma kernel SpectrumVisualizer
 
-RWStructuredBuffer<float> _FrequencyBands;
 RWStructuredBuffer<float3> _Positions;
 RWStructuredBuffer<float3> _PrevPositions;
 
@@ -28,16 +27,8 @@ void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 	float2 uv = GetUV(id);
 	float y = 0;
 
-	if (id.y >= _Depth - 1)
-	{
-		y = _HeightScale * _FrequencyBands[id.x];
-	}
-	else
-	{
-		int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth - 1);
-		y = _PrevPositions[id.x +  clampedIndex * _Resolution].y;	
-
-	}
+	int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth);
+	y = _PrevPositions[id.x +  clampedIndex * _Resolution].y;	
 	
 	SetPosition(id, float3(uv.x, y, uv.y)); 	
 }
