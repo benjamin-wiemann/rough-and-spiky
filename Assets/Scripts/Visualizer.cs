@@ -3,33 +3,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using ProceduralMesh;
+
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Visualizer : MonoBehaviour
 {
 
     public enum CalculationMethod { CPU, GPU }
 
-    const int maxResolution = 1000;
+    const int maxResolution = 1024;
 
     [SerializeField, Range(8, maxResolution)]
-    public int resolution = 8;
+    public int spectrumResolution = 512;
 
     [SerializeField, Range(8, maxResolution)]
     public int depth = 8;
 
-    [SerializeField, Range(0.001f, 0.1f)]
-    float heightScale = 0.01f;
+    [SerializeField, Range(0.0005f, 0.01f)]
+    float heightScale = 0.001f;
 
     [SerializeField, Range(20, 200)]
     int speed = 60;
 
-    [SerializeField]
+    // Vertices per unit
+    [SerializeField, Range(32, 4096)]
+    int meshResolution = 512;
+
     Mesh mesh;
 
-    [SerializeField]
-    Material material;
-
-    [SerializeField]
-    Transform pointPrefab;
+    // [SerializeField]
+    // Material material;
 
     [SerializeField]
     CalculationMethod calculationMethod;
@@ -46,36 +49,26 @@ public class Visualizer : MonoBehaviour
 
     float[] spectrum ;
 
-    Transform[] points;
+    bool refreshNeeded = true;
 
-    void Start()
-    {
-        
-    } 
-
+    void Awake () {
+		mesh = new Mesh {
+			name = "Procedural Mesh"
+		};
+        GetComponent<MeshFilter>().mesh = mesh;
+	}
 
     void OnEnable()
     {
-        if (Application.isPlaying)
-        {
-            spectrum = new float[resolution];
-            audioProcessor.Initialize(resolution);            
-            switch (calculationMethod)
-            {
-                case CalculationMethod.CPU:
-                    cpuController = new CPUPointController( resolution, depth );
-                    break;
-                case CalculationMethod.GPU:
-                    gpuController = new GPUPointController( maxResolution);
-                    break;
-            }
-        }
+        // if (Application.isPlaying)
+        // {
+            
+        // }
     }
 
     void OnDisable()
     {
-        if (Application.isPlaying)
-        {
+
             if( gpuController != null)
             {
                 gpuController.ReleaseBuffers();
@@ -84,8 +77,6 @@ public class Visualizer : MonoBehaviour
             {
                 cpuController.ReleaseBuffers();
             }
-            
-        }
 
     }
 
@@ -93,20 +84,37 @@ public class Visualizer : MonoBehaviour
     {
         if (enabled)
         {
-            OnDisable();
-            OnEnable();
+            refreshNeeded = true;
+            // OnDisable();
+            // OnEnable();
         }
     }
 
     void Update()
     {
+        if( refreshNeeded )
+        {
+            GenerateMesh();
+            spectrum = new float[spectrumResolution];
+            audioProcessor.Initialize(spectrumResolution);            
+            switch (calculationMethod)
+            {
+                case CalculationMethod.CPU:
+                    cpuController = new CPUPointController( spectrumResolution, depth );
+                    break;
+                case CalculationMethod.GPU:
+                    gpuController = new GPUPointController( spectrumResolution, depth);
+                    break;
+            }
+            refreshNeeded = false;
+        }
         switch (calculationMethod)
         {
             case CalculationMethod.CPU:
-                cpuController.UpdatePointPosition( resolution, depth, speed, heightScale, spectrum, material, mesh);
+                cpuController.UpdatePointPosition( spectrumResolution, depth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
             case CalculationMethod.GPU:
-                gpuController.UpdatePointPosition( computeShader, resolution, depth, speed, heightScale, spectrum, material, mesh);
+                gpuController.UpdatePointPosition( computeShader, spectrumResolution, depth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
         }
     }
@@ -116,19 +124,15 @@ public class Visualizer : MonoBehaviour
         spectrum = audioProcessor.GetSpectrumAudioSource();
     }
 
-    void InitPointCPU()
-    {
-        float step = 2f / resolution;
-        var scale = Vector3.one * step;
-        points = new Transform[resolution * depth];
-        for (int i = 0; i < points.Length; i++)
-        {
-            Transform point = points[i] = Instantiate(pointPrefab);
-            point.localScale = scale;
-            point.SetParent(transform, false);
-        }
-        audioProcessor.Initialize(resolution);
-    }
+
+    void GenerateMesh () {
+		Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(1);
+		Mesh.MeshData meshData = meshDataArray[0];
+
+		MeshJob<SharedTriangleGrid>.ScheduleParallel(mesh, meshData, meshResolution, default).Complete();
+
+		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
+	}
 
 
 }

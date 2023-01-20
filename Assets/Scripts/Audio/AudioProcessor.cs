@@ -27,7 +27,7 @@ public class AudioProcessor : MonoBehaviour
     void OnEnable()
     {
         _audioSource = GetComponent<AudioSource> ();
-        Initialize( visualizer.resolution );           
+        Initialize( visualizer.spectrumResolution );           
     }
 
     void OnDisable()

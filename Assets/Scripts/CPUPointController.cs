@@ -37,6 +37,7 @@ public class CPUPointController
         
         positionsA = new NativeArray<float3>( resolution * depth, Allocator.Persistent);
         positionsB = new NativeArray<float3>( resolution * depth, Allocator.Persistent);
+        frequencyBands = new NativeArray<float>( resolution, Allocator.Persistent );
         positionsBuffer = new ComputeBuffer(positionsA.Length, 4 * 3);
 
         JobHandle jobHandle = default;
@@ -54,8 +55,9 @@ public class CPUPointController
 
     ~CPUPointController()
     {
-        
+        ReleaseBuffers();
     }
+
 
     public void ReleaseBuffers()
     {

@@ -1,23 +1,23 @@
-#if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-	StructuredBuffer<float3> _Positions;
-#endif
 
-float _Step;
+StructuredBuffer<float> _Positions;
+int _Resolution;
+int _Depth;
+float _HeightScale;
 
-void ConfigureProcedural () {
-	#if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
-		float3 position = _Positions[unity_InstanceID];
-
-		unity_ObjectToWorld = 0.0;
-		unity_ObjectToWorld._m03_m13_m23_m33 = float4(position, 1.0);
-		unity_ObjectToWorld._m00_m11_m22 = _Step;
-	#endif
+void SpectrumPosition_float ( float3 positionIn, out float3 positionOut) {
+	int index = (int) round(positionIn.x * _Resolution)  + (int) round(positionIn.z * _Resolution) * _Depth;
+	positionOut = float3( positionIn.x, _Positions[index] * _HeightScale, positionIn.z);
 }
 
-void ShaderGraphFunction_float (float3 In, out float3 Out) {
-	Out = In;
-}
+// void SpectrumPosition_half ( half3 positionIn, out half3 positionOut) {
+// 	int index = (int) round(positionIn.x * _Resolution)  + (int) round(positionIn.z * _Resolution) * _Resolution;
+// 	positionOut = (half3) _Positions[index];
+// }
 
-void ShaderGraphFunction_half (half3 In, out half3 Out) {
-	Out = In;
-}
+// void ShaderGraphFunction_float (float3 In, out float3 Out) {
+// 	Out = In;
+// }
+
+// void ShaderGraphFunction_half (half3 In, out half3 Out) {
+// 	Out = In;
+// }

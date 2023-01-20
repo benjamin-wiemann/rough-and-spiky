@@ -1,35 +1,18 @@
 #pragma kernel SpectrumVisualizer
 
-RWStructuredBuffer<float3> _Positions;
-RWStructuredBuffer<float3> _PrevPositions;
-
+RWStructuredBuffer<float> _Positions;
+RWStructuredBuffer<float> _PrevPositions;
 
 int _IndexOffset;
-float _Step;
-float _HeightScale;
 uint _Resolution;
 uint _Depth;
-
-float2 GetUV (uint3 id) {
-	return (id.xy + 0.5) * _Step - 1.0;
-}
-
-void SetPosition (uint3 id, float3 position) {
-	if (id.x < _Resolution && id.y < _Depth) {
-		_Positions[id.x + id.y * _Resolution] = position;
-	}
-}
 
 [numthreads(8, 8, 1)]
 void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 {
 
-	float2 uv = GetUV(id);
-	float y = 0;
-
 	int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth);
-	y = _PrevPositions[id.x +  clampedIndex * _Resolution].y;	
-	
-	SetPosition(id, float3(uv.x, y, uv.y)); 	
+	_Positions[id.x + id.y * _Resolution] = _PrevPositions[id.x +  clampedIndex * _Resolution];	
+
 }
 

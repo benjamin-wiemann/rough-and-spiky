@@ -5,8 +5,6 @@ using Unity.Mathematics;
 public class GPUPointController
 {
 
-    ComputeBuffer freqBandsBuffer;
-
     ComputeBuffer positionsBufferA;
 
     ComputeBuffer positionsBufferB;
@@ -30,10 +28,15 @@ public class GPUPointController
     depthId = Shader.PropertyToID("_Depth"),
     heightId = Shader.PropertyToID("_HeightScale");
 
-    public GPUPointController( int maxResolution )
+    public GPUPointController( int maxResolution, int depth )
     {
-        positionsBufferA = new ComputeBuffer(maxResolution * ( maxResolution + 1), 3 * 4);
-        positionsBufferB = new ComputeBuffer(maxResolution * ( maxResolution + 1), 3 * 4);
+        positionsBufferA = new ComputeBuffer(maxResolution * ( depth + 1), 4);
+        positionsBufferB = new ComputeBuffer(maxResolution * ( depth + 1), 4);
+    }
+
+    ~GPUPointController()
+    {
+        ReleaseBuffers();
     }
 
     public void ReleaseBuffers()
@@ -85,15 +88,12 @@ public class GPUPointController
         computeShader.SetFloat(stepId, step);
         computeShader.SetInt(indexOffsetId, indexOffset);
         computeShader.SetInt(depthId, depth);
-        computeShader.SetFloat(heightId, heightScale);
-
-        freqBandsBuffer.SetData(spectrum);
 
         if (readFromBuffer == ReadFromBuffer.A)
         {
             if(indexOffset > 0)
             {
-                TransferSpectrumToBuffer(spectrum, positionsBufferA, depth, heightScale);
+                positionsBufferA.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
             }            
             computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferA);
             computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferB);
@@ -102,7 +102,7 @@ public class GPUPointController
         {   
             if(indexOffset > 0)
             {
-                TransferSpectrumToBuffer(spectrum, positionsBufferB, depth, heightScale);
+                positionsBufferB.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
             } 
             computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferB);
             computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferA);
@@ -123,9 +123,11 @@ public class GPUPointController
             readFromBuffer = ReadFromBuffer.A;
         }
 
-        material.SetFloat(stepId, step);
-        var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
+        material.SetInteger(resolutionId, resolution);
+        material.SetInteger(depthId, depth);
+        material.SetFloat(heightId, heightScale);
+        // var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
+        // // Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
 
         if (cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
         {
