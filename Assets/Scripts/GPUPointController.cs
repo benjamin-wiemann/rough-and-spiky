@@ -20,8 +20,8 @@ public class GPUPointController
     float cumulatedDeltaTime = 0;
 
     static readonly int
-    positionsId = Shader.PropertyToID("_Positions"),
-    prevPositionsId = Shader.PropertyToID("_PrevPositions"),
+    spectrogramId = Shader.PropertyToID("_Spectrogram"),
+    prevSpectrogramId = Shader.PropertyToID("_PrevSpectrogram"),
     resolutionId = Shader.PropertyToID("_Resolution"),
     stepId = Shader.PropertyToID("_Step"),
     indexOffsetId = Shader.PropertyToID("_IndexOffset"),
@@ -95,8 +95,8 @@ public class GPUPointController
             {
                 positionsBufferA.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
             }            
-            computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferA);
-            computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferB);
+            computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferA);
+            computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferB);
         }
         else
         {   
@@ -104,8 +104,8 @@ public class GPUPointController
             {
                 positionsBufferB.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
             } 
-            computeShader.SetBuffer(kernelHandle, prevPositionsId, positionsBufferB);
-            computeShader.SetBuffer(kernelHandle, positionsId, positionsBufferA);
+            computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferB);
+            computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferA);
         }
 
         int groupsX = Mathf.CeilToInt(resolution / 8f);
@@ -114,12 +114,12 @@ public class GPUPointController
 
         if (readFromBuffer == ReadFromBuffer.A)
         {
-            material.SetBuffer(positionsId, positionsBufferB);
+            material.SetBuffer(spectrogramId, positionsBufferB);
             readFromBuffer = ReadFromBuffer.B;
         }
         else
         {
-            material.SetBuffer(positionsId, positionsBufferA);
+            material.SetBuffer(spectrogramId, positionsBufferA);
             readFromBuffer = ReadFromBuffer.A;
         }
 

@@ -13,11 +13,16 @@ public class Visualizer : MonoBehaviour
 
     const int maxResolution = 1024;
 
+
+    // Number of samples in a spectrum
     [SerializeField, Range(8, maxResolution)]
     public int spectrumResolution = 512;
+    int spectrumResolutionOld;
 
-    [SerializeField, Range(8, maxResolution)]
-    public int depth = 8;
+    // Number of spectrums in the spectrogram
+    [SerializeField, Range(8, 8192)]
+    int spectrogramDepth = 8;
+    int spectrogramDepthOld;
 
     [SerializeField, Range(0.0005f, 0.01f)]
     float heightScale = 0.001f;
@@ -25,14 +30,22 @@ public class Visualizer : MonoBehaviour
     [SerializeField, Range(20, 200)]
     int speed = 60;
 
-    // Vertices per unit
+    // Vertices per unit in mesh
     [SerializeField, Range(32, 4096)]
     int meshResolution = 512;
+    int meshResolutionOld;
+
+    // Size of mesh in X direction
+    [SerializeField, Range(1, 10)]
+    float meshX = 1;
+    float meshXOld;
+
+    // Size of mesh in Y direction
+    [SerializeField, Range(1, 100)]
+    float meshZ = 1;
+    float meshZOld;
 
     Mesh mesh;
-
-    // [SerializeField]
-    // Material material;
 
     [SerializeField]
     CalculationMethod calculationMethod;
@@ -49,13 +62,22 @@ public class Visualizer : MonoBehaviour
 
     float[] spectrum ;
 
-    bool refreshNeeded = true;
+    bool spectrogramChanged = true;
+
+    bool meshChanged = true;
 
     void Awake () {
 		mesh = new Mesh {
 			name = "Procedural Mesh"
 		};
         GetComponent<MeshFilter>().mesh = mesh;
+
+        spectrogramDepthOld = spectrogramDepth;
+        spectrumResolutionOld = spectrumResolution;
+        meshResolutionOld = meshResolution;
+        meshXOld = meshX;
+        meshZOld = meshZ;
+
 	}
 
     void OnEnable()
@@ -84,37 +106,54 @@ public class Visualizer : MonoBehaviour
     {
         if (enabled)
         {
-            refreshNeeded = true;
-            // OnDisable();
-            // OnEnable();
+            if( spectrogramDepthOld != spectrogramDepth 
+            || spectrumResolutionOld != spectrumResolution)
+            {
+                spectrogramChanged = true;
+                spectrogramDepthOld = spectrogramDepth;
+                spectrumResolutionOld = spectrumResolution;
+            }
+            if( meshResolutionOld != meshResolution 
+            || meshXOld != meshX 
+            || meshZOld != meshZ )
+            {
+                meshChanged = true;
+                meshResolutionOld = meshResolution;
+                meshXOld = meshX;
+                meshZOld = meshZ;
+            }
         }
     }
 
     void Update()
     {
-        if( refreshNeeded )
+        if( spectrogramChanged )
         {
-            GenerateMesh();
             spectrum = new float[spectrumResolution];
             audioProcessor.Initialize(spectrumResolution);            
             switch (calculationMethod)
             {
                 case CalculationMethod.CPU:
-                    cpuController = new CPUPointController( spectrumResolution, depth );
+                    cpuController = new CPUPointController( spectrumResolution, spectrogramDepth );
                     break;
                 case CalculationMethod.GPU:
-                    gpuController = new GPUPointController( spectrumResolution, depth);
+                    gpuController = new GPUPointController( spectrumResolution, spectrogramDepth);
                     break;
             }
-            refreshNeeded = false;
+            spectrogramChanged = false;
+        }
+        if( meshChanged)
+        {
+            GenerateMesh();
+            meshChanged = false;
         }
         switch (calculationMethod)
         {
             case CalculationMethod.CPU:
-                cpuController.UpdatePointPosition( spectrumResolution, depth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
+                cpuController.UpdatePointPosition( spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
             case CalculationMethod.GPU:
-                gpuController.UpdatePointPosition( computeShader, spectrumResolution, depth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
+                gpuController.UpdatePointPosition( computeShader, spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
         }
     }
@@ -129,7 +168,7 @@ public class Visualizer : MonoBehaviour
 		Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(1);
 		Mesh.MeshData meshData = meshDataArray[0];
 
-		MeshJob<SharedTriangleGrid>.ScheduleParallel(mesh, meshData, meshResolution, default).Complete();
+		MeshJob<SharedTriangleGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
 	}

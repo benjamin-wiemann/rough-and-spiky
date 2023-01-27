@@ -1794,10 +1794,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spectrumResolution: 237
-  depth: 255
+  spectrogramDepth: 8
   heightScale: 0.01
   speed: 60
   meshResolution: 129
+  meshX: 1
+  meshZ: 1
   calculationMethod: 1
   computeShader: {fileID: 7200000, guid: 91eb292fef05447489f09406963591a6, type: 3}
   audioProcessor: {fileID: 1997742421}

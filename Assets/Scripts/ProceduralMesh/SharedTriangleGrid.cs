@@ -8,19 +8,23 @@ namespace ProceduralMesh
 
     public struct SharedTriangleGrid : IMeshGenerator
     {
-        public int VertexCount => (Resolution + 1) * (Resolution + 1); 
+        public int VertexCount => (int) round(Resolution * dimX + 1 ) * (int) round(Resolution * dimZ + 1); 
 
-        public int IndexCount => 6 * Resolution * Resolution ;
+        public int IndexCount => (int) round(6 * Resolution * Resolution * dimZ * dimX);
 
-        public int JobLength => Resolution + 1 ;
+        public int JobLength => (int) round(Resolution * dimZ + 1) ;
 
         public Bounds Bounds => new Bounds(Vector3.zero, new Vector3(1f + 0.5f / Resolution, 0f, sqrt(3f) / 2f ));
 
         public int Resolution { get; set; }
 
+        public float dimZ { get; set; }
+        
+        public float dimX { get; set; }
+
         public void Execute<S>(int z, SingleStream stream) 
         {
-            int vi = (Resolution + 1) * z, ti = 2 * Resolution * (z - 1);
+            int vi = JobLength * z, ti = 2 * Resolution * (z - 1);
 
             float xOffset = -0.25f;
             float uOffset = 0f;
@@ -36,7 +40,7 @@ namespace ProceduralMesh
 				tB = int3(iB, iC, iD);
 			}
 
-			xOffset = xOffset / Resolution; // - 0.5f;
+			xOffset = xOffset / Resolution - dimX/2;
 
             var vertex = new Vertex();
             vertex.normal.y = 1f;
@@ -51,7 +55,7 @@ namespace ProceduralMesh
 			stream.SetVertex(vi, vertex);
             vi += 1;
 
-            for (int x = 1; x <= Resolution; x++, vi++, ti += 2) {
+            for (int x = 1; x <= Resolution * dimX; x++, vi++, ti += 2) {
                 vertex.position.x = (float)x / Resolution + xOffset;
 				vertex.texCoord0.x = x / (Resolution + 0.5f) + uOffset;
 				stream.SetVertex(vi, vertex);

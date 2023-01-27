@@ -1,7 +1,7 @@
 #pragma kernel SpectrumVisualizer
 
-RWStructuredBuffer<float> _Positions;
-RWStructuredBuffer<float> _PrevPositions;
+RWStructuredBuffer<float> _Spectrogram;
+RWStructuredBuffer<float> _PrevSpectrogram;
 
 int _IndexOffset;
 uint _Resolution;
@@ -12,7 +12,7 @@ void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 {
 
 	int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth);
-	_Positions[id.x + id.y * _Resolution] = _PrevPositions[id.x +  clampedIndex * _Resolution];	
+	_Spectrogram[id.x + id.y * _Resolution] = _PrevSpectrogram[id.x +  clampedIndex * _Resolution];	
 
 }
 

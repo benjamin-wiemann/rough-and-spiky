@@ -14,6 +14,12 @@ namespace ProceduralMesh {
 
 		int Resolution { get; set; }
 
-		void Execute<S> (int i, SingleStream streams);
+		float dimZ { get; set; }
+		
+		float dimX { get; set; }
+
+
+		void Execute<S> (int i, 
+		SingleStream streams);
 	}
 }

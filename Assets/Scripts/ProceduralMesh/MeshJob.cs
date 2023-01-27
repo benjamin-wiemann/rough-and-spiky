@@ -20,10 +20,12 @@ namespace ProceduralMesh {
 		public void Execute (int i) => generator.Execute<SingleStream>(i, streams);
 
         public static JobHandle ScheduleParallel (
-			Mesh mesh, Mesh.MeshData meshData, int resolution, JobHandle dependency
+			Mesh mesh, Mesh.MeshData meshData, int resolution, float xDim, float zDim, JobHandle dependency
 		) {
 			var job = new MeshJob<G>();
 			job.generator.Resolution = resolution;
+			job.generator.dimZ = zDim;
+			job.generator.dimX = xDim;
 			job.streams.Setup(
 				meshData,
 				mesh.bounds = job.generator.Bounds,
@@ -36,6 +38,6 @@ namespace ProceduralMesh {
     }
 
 	public delegate JobHandle MeshJobScheduleDelegate (
-		Mesh mesh, Mesh.MeshData meshData, int resolution, JobHandle dependency
+		Mesh mesh, Mesh.MeshData meshData, int resolution, int depth, JobHandle dependency
 	);
 }
