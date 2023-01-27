@@ -107,9 +107,6 @@
         },
         {
             "m_Id": "70d61e324a784d3fb33374590291246f"
-        },
-        {
-            "m_Id": "455bdc11a11b4e7faa7e601b461d51b0"
         }
     ],
     "m_GroupDatas": [],
@@ -429,29 +426,6 @@
             "m_Id": "98a991a12d22466bb4f969d13694e41a"
         }
     ]
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
-    "m_ObjectId": "069d1ed8b9af4502a9b7c534a5b17c60",
-    "m_Id": 0,
-    "m_DisplayName": "In",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "In",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
-    "m_Labels": []
 }
 
 {
@@ -1164,48 +1138,6 @@
 }
 
 {
-    "m_SGVersion": 1,
-    "m_Type": "UnityEditor.ShaderGraph.CustomFunctionNode",
-    "m_ObjectId": "455bdc11a11b4e7faa7e601b461d51b0",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "InjectPragmas (Custom Function)",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": -789.0000610351563,
-            "y": -564.0,
-            "width": 236.00006103515626,
-            "height": 94.0
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "069d1ed8b9af4502a9b7c534a5b17c60"
-        },
-        {
-            "m_Id": "a858d0775f464cc1aac4a4c31becea05"
-        }
-    ],
-    "synonyms": [
-        "code",
-        "HLSL"
-    ],
-    "m_Precision": 0,
-    "m_PreviewExpanded": false,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_SourceType": 1,
-    "m_FunctionName": "InjectPragmas",
-    "m_FunctionSource": "",
-    "m_FunctionBody": "#pragma instancing_options assumeuniformscaling procedural:ConfigureProcedural\r\n#pragma editor_sync_compilation\r\n\r\n\nOut = In;"
-}
-
-{
     "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.BlockNode",
     "m_ObjectId": "48d79ad0ff704138a8d207f7108f3f89",
@@ -1904,29 +1836,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
-    "m_ObjectId": "a858d0775f464cc1aac4a4c31becea05",
-    "m_Id": 1,
-    "m_DisplayName": "Out",
-    "m_SlotType": 1,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "Out",
-    "m_StageCapability": 3,
-    "m_Value": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
-    "m_DefaultValue": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-    },
-    "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector2MaterialSlot",
     "m_ObjectId": "b5cfa5569a2c4b86bfa4b322d2798a84",
     "m_Id": 1,
@@ -1991,10 +1900,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -437.90277099609377,
-            "y": -406.58599853515627,
-            "width": 279.0,
-            "height": 278.0
+            "x": -644.9999389648438,
+            "y": -310.9999694824219,
+            "width": 255.00009155273438,
+            "height": 93.99996948242188
         }
     },
     "m_Slots": [
