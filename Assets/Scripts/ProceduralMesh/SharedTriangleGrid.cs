@@ -31,7 +31,6 @@ namespace ProceduralMesh
         public void Execute<S>(int z, SingleStream stream) 
         {
 
-
             float triangleWidth = dimX / NumX;
             float triangleHeigth = dimZ / NumZ;
 
