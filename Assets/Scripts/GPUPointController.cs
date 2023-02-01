@@ -26,7 +26,9 @@ public class GPUPointController
     stepId = Shader.PropertyToID("_Step"),
     indexOffsetId = Shader.PropertyToID("_IndexOffset"),
     depthId = Shader.PropertyToID("_Depth"),
-    heightId = Shader.PropertyToID("_HeightScale");
+    heightId = Shader.PropertyToID("_HeightScale"),
+    meshXId = Shader.PropertyToID("_MeshX"),
+    meshZId = Shader.PropertyToID("_MeshZ");
 
     public GPUPointController( int maxResolution, int depth )
     {
@@ -53,26 +55,14 @@ public class GPUPointController
         }
     }
 
-    void TransferSpectrumToBuffer( float[] spectrum, ComputeBuffer buffer, int depth, float heightScale )
-    {
-        float step = 2f / spectrum.Length;
-        float z = (depth + 0.5f) * step - 1.0f;
-        float3[] spectrumPositions = new float3[ spectrum.Length];
-        for( int i = 0; i< spectrum.Length; i++)
-        {   
-            spectrumPositions[i] = new float3((i + 0.5f) * step - 1.0f, heightScale * spectrum[i], z);            
-        }
-        // adding spectrum at the end of the buffer
-        buffer.SetData(spectrumPositions, 0, spectrum.Length * depth, spectrum.Length);
-    }
-
-
     public void UpdatePointPosition(
         ComputeShader computeShader,
         int resolution,
         int depth, 
         int speed, 
         float heightScale, 
+        float meshX,
+        float meshZ,
         float[] spectrum, 
         Material material, 
         Mesh mesh)
@@ -126,8 +116,8 @@ public class GPUPointController
         material.SetInteger(resolutionId, resolution);
         material.SetInteger(depthId, depth);
         material.SetFloat(heightId, heightScale);
-        // var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
-        // // Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
+        material.SetFloat(meshXId, meshX);
+        material.SetFloat(meshZId, meshZ);
 
         if (cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
         {

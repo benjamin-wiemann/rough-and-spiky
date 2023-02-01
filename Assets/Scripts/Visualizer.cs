@@ -31,8 +31,8 @@ public class Visualizer : MonoBehaviour
     int speed = 60;
 
     // Vertices per unit in mesh
-    [SerializeField, Range(32, 4096)]
-    int meshResolution = 512;
+    [SerializeField, Range(32, 1024)]
+    int meshResolution = 128;
     int meshResolutionOld;
 
     // Size of mesh in X direction
@@ -100,6 +100,7 @@ public class Visualizer : MonoBehaviour
                 cpuController.ReleaseBuffers();
             }
 
+
     }
 
     void OnValidate()
@@ -153,7 +154,7 @@ public class Visualizer : MonoBehaviour
                 cpuController.UpdatePointPosition( spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
             case CalculationMethod.GPU:
-                gpuController.UpdatePointPosition( computeShader, spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
+                gpuController.UpdatePointPosition( computeShader, spectrumResolution, spectrogramDepth, speed, heightScale, meshX, meshZ, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
         }
     }

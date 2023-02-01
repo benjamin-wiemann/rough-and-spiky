@@ -152,6 +152,8 @@ public class TestSuite
     [Test]
     public void TriangleGrid()
     {
+        float testTolerance = 0.00001f;
+
         Mesh mesh = new Mesh
         {
             name = "Procedural Mesh"
@@ -169,7 +171,7 @@ public class TestSuite
             triangleGrid.VertexCount,
             triangleGrid.IndexCount
         );
-        // Assert.That(triangleGrid.JobLength, Is.EqualTo(2));
+        
         for (int i = 0; i < triangleGrid.JobLength; i++)
         {
             triangleGrid.Execute<ProceduralMesh.SingleStream>(i, stream);
@@ -178,10 +180,10 @@ public class TestSuite
         Assert.That(meshData.vertexCount, Is.EqualTo(4));
         NativeArray<Vector3> outVertices = new NativeArray<Vector3>(4, Allocator.Persistent);
         meshData.GetVertices(outVertices);
-        Assert.That(outVertices[0].x, Is.EqualTo(-0.75f));
-        Assert.That(outVertices[0].z, Is.EqualTo(0f));
-        Assert.That(outVertices[3].x, Is.EqualTo(0.75f));
-        Assert.That(outVertices[3].z, Is.EqualTo(sqrt(3f) / 2f));
+        Assert.That(outVertices[0].x, Is.EqualTo(-0.75f).Within(testTolerance));
+        Assert.That(outVertices[0].z, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(outVertices[3].x, Is.EqualTo(0.75f).Within(testTolerance));
+        Assert.That(outVertices[3].z, Is.EqualTo(1f).Within(testTolerance));
         outVertices.Dispose();
 
         triangleGrid.Resolution = 2;
@@ -197,14 +199,38 @@ public class TestSuite
         {
             triangleGrid.Execute<ProceduralMesh.SingleStream>(i, stream);
         }   
-        Assert.That( meshData.vertexCount, Is.EqualTo( 25 ));
-        outVertices = new NativeArray<Vector3>(25, Allocator.Persistent);
+        Assert.That( meshData.vertexCount, Is.EqualTo( 30 ));
+        outVertices = new NativeArray<Vector3>(30, Allocator.Persistent);
         meshData.GetVertices( outVertices );     
-        Assert.That(outVertices[0].x, Is.EqualTo(-1.125f));
-        Assert.That(outVertices[0].z, Is.EqualTo(0f));
-        Assert.That(outVertices[24].x, Is.EqualTo(0.875f));
-        Assert.That(outVertices[24].z, Is.EqualTo(2 * sqrt(3f) / 2f));   
+        Assert.That(outVertices[0].x, Is.EqualTo(-1.125f).Within(testTolerance));
+        Assert.That(outVertices[0].z, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(outVertices[29].x, Is.EqualTo(1.125f).Within(testTolerance));
+        Assert.That(outVertices[29].z, Is.EqualTo(2 ).Within(testTolerance));   
         outVertices.Dispose();
+        
+
+        triangleGrid.Resolution = 1;
+        triangleGrid.dimZ = 1;
+        triangleGrid.dimX = 1.2f;
+        stream.Setup(
+            meshData,
+            mesh.bounds = triangleGrid.Bounds,
+            triangleGrid.VertexCount,
+            triangleGrid.IndexCount
+        );
+        for (int i = 0; i < triangleGrid.JobLength; i++)
+        {
+            triangleGrid.Execute<ProceduralMesh.SingleStream>(i, stream);
+        }   
+        Assert.That( meshData.vertexCount, Is.EqualTo( 4 ));
+        outVertices = new NativeArray<Vector3>(4, Allocator.Persistent);
+        meshData.GetVertices( outVertices );     
+        Assert.That(outVertices[0].x, Is.EqualTo(-0.9f).Within(testTolerance));
+        Assert.That(outVertices[0].z, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(outVertices[3].x, Is.EqualTo(0.9f).Within(testTolerance));
+        Assert.That(outVertices[3].z, Is.EqualTo(1).Within(testTolerance));
+        outVertices.Dispose();
+        meshDataArray.Dispose();
 
     }
 
