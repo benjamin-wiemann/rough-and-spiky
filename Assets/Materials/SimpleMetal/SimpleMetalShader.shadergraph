@@ -157,20 +157,6 @@
         {
             "m_OutputSlot": {
                 "m_Node": {
-                    "m_Id": "1eefe3b66a744d3d809ccc99f334c4d7"
-                },
-                "m_SlotId": 2
-            },
-            "m_InputSlot": {
-                "m_Node": {
-                    "m_Id": "8bee6ab3628f4de289fd56e37be69ffb"
-                },
-                "m_SlotId": 0
-            }
-        },
-        {
-            "m_OutputSlot": {
-                "m_Node": {
                     "m_Id": "1ef7165bb37845f78adc93e17eb214aa"
                 },
                 "m_SlotId": 0
@@ -318,6 +304,34 @@
             "m_InputSlot": {
                 "m_Node": {
                     "m_Id": "72860945e2574b28bbc564f0b51f9119"
+                },
+                "m_SlotId": 0
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "b69de08d1d8646419e0d8bb3541c72f1"
+                },
+                "m_SlotId": 2
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "0b285c1f4875423fb9ddcceb802b3e12"
+                },
+                "m_SlotId": 0
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "b69de08d1d8646419e0d8bb3541c72f1"
+                },
+                "m_SlotId": 3
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "c00e6fa677ca4b2dbdb6e8abace7abac"
                 },
                 "m_SlotId": 0
             }
@@ -644,6 +658,29 @@
 }
 
 {
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "1695789713174f8ab32ca5460b45f071",
+    "m_Id": 2,
+    "m_DisplayName": "NormalOut",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "NormalOut",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
     "m_SGVersion": 1,
     "m_Type": "UnityEditor.ShaderGraph.PositionNode",
     "m_ObjectId": "17c70044b48f4da3b903229e623d2f6e",
@@ -655,10 +692,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -2290.000244140625,
-            "y": 496.9999694824219,
-            "width": 208.000244140625,
-            "height": 315.0000305175781
+            "x": -2248.000244140625,
+            "y": 412.00006103515627,
+            "width": 208.0001220703125,
+            "height": 315.0
         }
     },
     "m_Slots": [
@@ -1265,10 +1302,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1893.0001220703125,
-            "y": 474.0000305175781,
+            "x": -1929.0001220703125,
+            "y": 293.0,
             "width": 208.0,
-            "height": 361.0000305175781
+            "height": 361.00006103515627
         }
     },
     "m_Slots": [
@@ -1614,6 +1651,29 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "7e5fd05390fc4e0fa237721b3a252097",
+    "m_Id": 3,
+    "m_DisplayName": "TangentOut",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "TangentOut",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
     "m_ObjectId": "837e38939761489abba00750ca8c5978",
     "m_Group": {
@@ -1912,6 +1972,12 @@
         },
         {
             "m_Id": "ba358ee5c720400caf316c9d8abdb976"
+        },
+        {
+            "m_Id": "1695789713174f8ab32ca5460b45f071"
+        },
+        {
+            "m_Id": "7e5fd05390fc4e0fa237721b3a252097"
         }
     ],
     "synonyms": [

@@ -9,6 +9,8 @@ public class GPUPointController
 
     ComputeBuffer positionsBufferB;
 
+    float[] debugSpectrogram;
+
     enum ReadFromBuffer
     {
         A,
@@ -34,6 +36,7 @@ public class GPUPointController
     {
         positionsBufferA = new ComputeBuffer(maxResolution * ( depth + 1), 4);
         positionsBufferB = new ComputeBuffer(maxResolution * ( depth + 1), 4);
+
     }
 
     ~GPUPointController()
@@ -65,63 +68,104 @@ public class GPUPointController
         float meshZ,
         float[] spectrum, 
         Material material, 
-        Mesh mesh)
+        Mesh mesh,
+        bool debugShader)
     {
-
-        int kernelHandle = computeShader.FindKernel("SpectrumVisualizer");
-
-        float step = 2f / resolution;
-        cumulatedDeltaTime += speed * Time.deltaTime;
-        int indexOffset = Mathf.FloorToInt(cumulatedDeltaTime);
-
-        computeShader.SetInt(resolutionId, resolution);
-        computeShader.SetFloat(stepId, step);
-        computeShader.SetInt(indexOffsetId, indexOffset);
-        computeShader.SetInt(depthId, depth);
-
-        if (readFromBuffer == ReadFromBuffer.A)
+        if( !debugShader )
         {
-            if(indexOffset > 0)
+            int kernelHandle = computeShader.FindKernel("SpectrumVisualizer");
+
+            float step = 2f / resolution;
+            cumulatedDeltaTime += speed * Time.deltaTime;
+            int indexOffset = Mathf.FloorToInt(cumulatedDeltaTime);
+
+            computeShader.SetInt(resolutionId, resolution);
+            computeShader.SetFloat(stepId, step);
+            computeShader.SetInt(indexOffsetId, indexOffset);
+            computeShader.SetInt(depthId, depth);
+
+            if (readFromBuffer == ReadFromBuffer.A)
             {
-                positionsBufferA.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
-            }            
-            computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferA);
-            computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferB);
+                if(indexOffset > 0)
+                {
+                    positionsBufferA.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
+                }            
+                computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferA);
+                computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferB);
+            }
+            else
+            {   
+                if(indexOffset > 0)
+                {
+                    positionsBufferB.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
+                } 
+                computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferB);
+                computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferA);
+            }
+
+            int groupsX = Mathf.CeilToInt(resolution / 8f);
+            int groupsY = Mathf.CeilToInt(depth / 8f);
+            computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
+
+            if (readFromBuffer == ReadFromBuffer.A)
+            {
+                material.SetBuffer(spectrogramId, positionsBufferB);
+                readFromBuffer = ReadFromBuffer.B;
+            }
+            else
+            {
+                material.SetBuffer(spectrogramId, positionsBufferA);
+                readFromBuffer = ReadFromBuffer.A;
+            }
+
+            material.SetInteger(resolutionId, resolution);
+            material.SetInteger(depthId, depth);
+            material.SetFloat(heightId, heightScale);
+            material.SetFloat(meshXId, meshX);
+            material.SetFloat(meshZId, meshZ);
+
+            if (cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
+            {
+                cumulatedDeltaTime -= Mathf.FloorToInt(cumulatedDeltaTime);
+            }
         }
         else
-        {   
-            if(indexOffset > 0)
-            {
-                positionsBufferB.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
-            } 
-            computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferB);
-            computeShader.SetBuffer(kernelHandle, spectrogramId, positionsBufferA);
-        }
-
-        int groupsX = Mathf.CeilToInt(resolution / 8f);
-        int groupsY = Mathf.CeilToInt(depth / 8f);
-        computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
-
-        if (readFromBuffer == ReadFromBuffer.A)
-        {
-            material.SetBuffer(spectrogramId, positionsBufferB);
-            readFromBuffer = ReadFromBuffer.B;
-        }
-        else
-        {
+        {            
+            GenerateDebugSpectrogram( resolution, depth);  
+            
+            positionsBufferA.SetData(debugSpectrogram);
             material.SetBuffer(spectrogramId, positionsBufferA);
-            readFromBuffer = ReadFromBuffer.A;
+            material.SetInteger(resolutionId, resolution);
+            material.SetInteger(depthId, depth);
+            material.SetFloat(heightId, heightScale);
+            material.SetFloat(meshXId, meshX);
+            material.SetFloat(meshZId, meshZ);
+
         }
+    }
 
-        material.SetInteger(resolutionId, resolution);
-        material.SetInteger(depthId, depth);
-        material.SetFloat(heightId, heightScale);
-        material.SetFloat(meshXId, meshX);
-        material.SetFloat(meshZId, meshZ);
-
-        if (cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
+    void GenerateDebugSpectrogram(int resolution, int depth)
+    {
+        bool init = false;
+        if( debugSpectrogram == null)
         {
-            cumulatedDeltaTime -= Mathf.FloorToInt(cumulatedDeltaTime);
+            debugSpectrogram = new float[depth * resolution];
+            init = true;
+        }
+        if( debugSpectrogram.Length != depth * resolution)
+        {
+            debugSpectrogram = new float[depth * resolution];
+            init = true;
+        }
+        if( init )
+        {
+            for( int i = 0; i < depth; i++ )
+            {
+                for( int j = 0; j < resolution; j++ )
+                {
+                    debugSpectrogram[j + i * resolution] = 100 *(Mathf.Sin(2 * (float) i / (float) depth * Mathf.PI) + Mathf.Sin(2 * (float) j / (float) resolution * Mathf.PI));
+                }
+            }
         }
     }
 }

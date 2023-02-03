@@ -56,6 +56,9 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     AudioProcessor audioProcessor;
 
+    [SerializeField]
+    bool debugShader = false;
+
     GPUPointController gpuController;
 
     CPUPointController cpuController;
@@ -154,14 +157,25 @@ public class Visualizer : MonoBehaviour
                 cpuController.UpdatePointPosition( spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
                 break;
             case CalculationMethod.GPU:
-                gpuController.UpdatePointPosition( computeShader, spectrumResolution, spectrogramDepth, speed, heightScale, meshX, meshZ, spectrum, GetComponent<MeshRenderer>().material, mesh);
+                gpuController.UpdatePointPosition( 
+                    computeShader, 
+                    spectrumResolution, 
+                    spectrogramDepth, 
+                    speed, 
+                    heightScale, 
+                    meshX, 
+                    meshZ, 
+                    spectrum, 
+                    GetComponent<MeshRenderer>().material, 
+                    mesh,
+                    debugShader);
                 break;
         }
     }
 
     void FixedUpdate()
     {
-        spectrum = audioProcessor.GetSpectrumAudioSource();
+        spectrum = audioProcessor.GetSpectrumAudioSource();        
     }
 
 
