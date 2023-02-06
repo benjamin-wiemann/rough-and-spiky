@@ -31,7 +31,7 @@ public class Visualizer : MonoBehaviour
     int speed = 60;
 
     // Vertices per unit in mesh
-    [SerializeField, Range(32, 1024)]
+    [SerializeField, Range(8, 1024)]
     int meshResolution = 128;
     int meshResolutionOld;
 
@@ -68,6 +68,10 @@ public class Visualizer : MonoBehaviour
     bool spectrogramChanged = true;
 
     bool meshChanged = true;
+
+    Vector3[] vertices, normals;
+
+	Vector4[] tangents;
 
     void Awake () {
 		mesh = new Mesh {
@@ -150,6 +154,10 @@ public class Visualizer : MonoBehaviour
         {
             GenerateMesh();
             meshChanged = false;
+
+            // vertices = mesh.vertices;
+            // normals = mesh.normals;
+            // tangents = mesh.tangents;
         }
         switch (calculationMethod)
         {
@@ -170,7 +178,7 @@ public class Visualizer : MonoBehaviour
                     mesh,
                     debugShader);
                 break;
-        }
+        }        
     }
 
     void FixedUpdate()
@@ -187,6 +195,20 @@ public class Visualizer : MonoBehaviour
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
 	}
+
+    // void OnDrawGizmos () {
+	// 	if (mesh == null) {
+	// 		return;
+	// 	}
+
+    //     for (int i = 0; i < vertices.Length; i++) {
+    //         Vector3 position = vertices[i];
+	// 		Gizmos.color = Color.green;
+	// 		Gizmos.DrawRay(position, normals[i] * 0.2f);
+	// 		Gizmos.color = Color.red;
+	// 		Gizmos.DrawRay(position, tangents[i] * 0.2f);
+	// 	}
+	// }
 
 
 }

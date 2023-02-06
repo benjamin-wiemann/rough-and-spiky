@@ -149,21 +149,21 @@ public class GPUPointController
         bool init = false;
         if( debugSpectrogram == null)
         {
-            debugSpectrogram = new float[depth * resolution];
+            debugSpectrogram = new float[(depth +1) * resolution];
             init = true;
         }
-        if( debugSpectrogram.Length != depth * resolution)
+        if( debugSpectrogram.Length != (depth + 1) * resolution)
         {
-            debugSpectrogram = new float[depth * resolution];
+            debugSpectrogram = new float[(depth + 1) * resolution];
             init = true;
         }
         if( init )
         {
-            for( int i = 0; i < depth; i++ )
+            for( int i = 0; i <= depth; i++ )
             {
                 for( int j = 0; j < resolution; j++ )
                 {
-                    debugSpectrogram[j + i * resolution] = 100 *(Mathf.Sin(2 * (float) i / (float) depth * Mathf.PI) + Mathf.Sin(2 * (float) j / (float) resolution * Mathf.PI));
+                    debugSpectrogram[j + i * resolution] = 100f *(Mathf.Sin(2f * (float) i / (float) depth * Mathf.PI) + Mathf.Sin(2f * (float) j / (float) resolution * Mathf.PI));
                 }
             }
         }

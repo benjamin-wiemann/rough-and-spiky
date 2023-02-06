@@ -20,13 +20,14 @@ void SpectrumPosition_float ( float3 PositionIn, out float3 PositionOut, out flo
 
 	float lowZ = lerp(lowXLowZ, highXLowZ, deltaX);
 	float highZ = lerp(lowXHighZ, highXHighZ, deltaX);
-	// interpolate on z axis
-	PositionOut = float3( PositionIn.x, lerp(lowZ, highZ, deltaZ) * _HeightScale, PositionIn.z);
+	float lowX = lerp(lowXLowZ, lowXHighZ, deltaZ);
+	float highX = lerp(highXLowZ, highXHighZ, deltaZ);
+	
 
-	float lowX = lerp(highXLowZ, highXHighZ, deltaX);
-	float highX = lerp(lowXLowZ, lowXHighZ, deltaX);
+	// interpolate on x axis
+	PositionOut = float3( PositionIn.x, lerp(lowX, highX, deltaX) * _HeightScale, PositionIn.z);
 
-	float2 derivatives = float2( (highX - lowX) * _Resolution,  (highZ - lowZ) * _Resolution);
-	TangentOut = float3(1.0, derivatives.x, 0.0);
+	float2 derivatives = float2( (highX - lowX) * _HeightScale * _Resolution,  (highZ - lowZ) * _HeightScale * _Depth);
+	TangentOut = float3(1.0, derivatives.x , 0.0);
 	NormalOut = cross(float3(0.0, derivatives.y, 1.0), TangentOut);
 }
