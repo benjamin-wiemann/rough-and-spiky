@@ -37,7 +37,7 @@ namespace ProceduralMesh
             int vi = (NumX + 1) * z, ti = 2 * NumX * (z - 1);
 
             float xOffset = -0.25f * triangleWidth;
-            float uOffset = 0f - dimX/2;
+            float uOffset = 0f;
             
             int iA = -NumX - 2, iB = -NumX - 1, iC = -1, iD = 0;
 			var tA = int3(iA, iC, iD);
@@ -60,7 +60,7 @@ namespace ProceduralMesh
 			vertex.position.z = z * triangleHeigth;
 
             vertex.texCoord0.x = uOffset;
-            vertex.texCoord0.y = vertex.position.z / (1f + 0.5f / Resolution) + 0.5f;
+            vertex.texCoord0.y = vertex.position.z / (dimZ + 0.5f / Resolution) + 0.5f;
 
 			stream.SetVertex(vi, vertex);
             vi += 1;

@@ -1,0 +1,25 @@
+#pragma kernel SpectrumVisualizer
+
+RWTexture2D<float> _Spectrogram;
+RWTexture2D<float> _PrevSpectrogram;
+
+RWStructuredBuffer<float> _Spectrum;
+
+uint _IndexOffset;
+uint _Resolution;
+uint _Depth;
+
+[numthreads(8, 8, 1)]
+void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
+{
+	if( id.y + _IndexOffset > _Depth)
+	{
+		_Spectrogram[uint2(id.x, id.y * _Resolution)] = _Spectrum[id.x];
+	}
+	else
+	{
+		_Spectrogram[uint2(id.x, id.y * _Resolution)] = 1; //_PrevSpectrogram[uint2(id.x, (id.y + _IndexOffset) * _Resolution)];	
+	}	
+	
+}
+

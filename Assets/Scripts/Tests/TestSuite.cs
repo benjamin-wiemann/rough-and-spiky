@@ -184,7 +184,15 @@ public class TestSuite
         Assert.That(outVertices[0].z, Is.EqualTo(0f).Within(testTolerance));
         Assert.That(outVertices[3].x, Is.EqualTo(0.75f).Within(testTolerance));
         Assert.That(outVertices[3].z, Is.EqualTo(1f).Within(testTolerance));
+        NativeArray<Vector2> uv = new NativeArray<Vector2>(4, Allocator.Persistent);
+        meshData.GetUVs(0,uv);
+        Assert.That(uv[0].x, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(uv[0].y, Is.EqualTo(0.5f).Within(testTolerance));
+        Assert.That(uv[3].x, Is.EqualTo(1f).Within(testTolerance));
+        float v = 1f /1.5f + 0.5f;
+        Assert.That(uv[3].y, Is.EqualTo(v).Within(testTolerance));
         outVertices.Dispose();
+        uv.Dispose();
 
         triangleGrid.Resolution = 2;
         triangleGrid.dimZ = 2;

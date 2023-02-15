@@ -71,14 +71,14 @@ public class CPUPointController
     public void UpdatePointPosition(
         int resolution,
         int depth, 
-        int speed, 
+        float spectrumShiftTime, 
         float heightScale, 
         float[] spectrum, 
         Material material, 
         Mesh mesh)
     {
         float step = 2f / resolution;
-        cumulatedDeltaTime += speed * Time.deltaTime;
+        cumulatedDeltaTime += spectrumShiftTime * Time.deltaTime;
         frequencyBands = new NativeArray<float>(spectrum, Allocator.Persistent);
 
         JobHandle jobHandle = default;
@@ -119,7 +119,7 @@ public class CPUPointController
         var bounds = new Bounds(Vector3.zero, Vector3.one * (2f + 2f / resolution));
         Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, resolution * depth);
 
-        if (cumulatedDeltaTime - Mathf.FloorToInt(speed * Time.deltaTime) >= 1)
+        if (cumulatedDeltaTime - Mathf.FloorToInt(spectrumShiftTime * Time.deltaTime) >= 1)
         {
             cumulatedDeltaTime -= Mathf.FloorToInt(cumulatedDeltaTime);
         }

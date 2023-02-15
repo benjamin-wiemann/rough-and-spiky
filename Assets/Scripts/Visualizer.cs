@@ -9,7 +9,7 @@ using ProceduralMesh;
 public class Visualizer : MonoBehaviour
 {
 
-    public enum CalculationMethod { CPU, GPU }
+    public enum ShaderType { Texture, ComputeBuffer }
 
     const int maxResolution = 1024;
 
@@ -27,8 +27,8 @@ public class Visualizer : MonoBehaviour
     [SerializeField, Range(0.0005f, 0.01f)]
     float heightScale = 0.001f;
 
-    [SerializeField, Range(20, 200)]
-    int speed = 60;
+    [SerializeField, Range(0.005f, 0.1f)]
+    float spectrumShiftTime = 0.016f;
 
     // Vertices per unit in mesh
     [SerializeField, Range(8, 1024)]
@@ -48,7 +48,7 @@ public class Visualizer : MonoBehaviour
     Mesh mesh;
 
     [SerializeField]
-    CalculationMethod calculationMethod;
+    ShaderType shaderType;
     
     [SerializeField]
     ComputeShader computeShader;
@@ -60,8 +60,6 @@ public class Visualizer : MonoBehaviour
     bool debugShader = false;
 
     GPUPointController gpuController;
-
-    CPUPointController cpuController;
 
     float[] spectrum ;
 
@@ -87,13 +85,6 @@ public class Visualizer : MonoBehaviour
 
 	}
 
-    void OnEnable()
-    {
-        // if (Application.isPlaying)
-        // {
-            
-        // }
-    }
 
     void OnDisable()
     {
@@ -102,11 +93,6 @@ public class Visualizer : MonoBehaviour
             {
                 gpuController.ReleaseBuffers();
             }
-            if( cpuController != null)
-            {
-                cpuController.ReleaseBuffers();
-            }
-
 
     }
 
@@ -138,16 +124,16 @@ public class Visualizer : MonoBehaviour
         if( spectrogramChanged )
         {
             spectrum = new float[spectrumResolution];
-            audioProcessor.Initialize(spectrumResolution);            
-            switch (calculationMethod)
+            audioProcessor.Initialize(spectrumResolution);     
+            switch( shaderType )      
             {
-                case CalculationMethod.CPU:
-                    cpuController = new CPUPointController( spectrumResolution, spectrogramDepth );
+                case ShaderType.ComputeBuffer:
+                    gpuController = new SpectrumBufferController(  GetComponent<MeshRenderer>().material, spectrumResolution, spectrogramDepth);
                     break;
-                case CalculationMethod.GPU:
-                    gpuController = new GPUPointController( spectrumResolution, spectrogramDepth);
+                case ShaderType.Texture:
+                    gpuController = new SpectrumTextureController(  GetComponent<MeshRenderer>().material, spectrumResolution, spectrogramDepth);
                     break;
-            }
+            } 
             spectrogramChanged = false;
         }
         if( meshChanged)
@@ -155,30 +141,18 @@ public class Visualizer : MonoBehaviour
             GenerateMesh();
             meshChanged = false;
 
-            // vertices = mesh.vertices;
-            // normals = mesh.normals;
-            // tangents = mesh.tangents;
         }
-        switch (calculationMethod)
-        {
-            case CalculationMethod.CPU:
-                cpuController.UpdatePointPosition( spectrumResolution, spectrogramDepth, speed, heightScale, spectrum, GetComponent<MeshRenderer>().material, mesh);
-                break;
-            case CalculationMethod.GPU:
-                gpuController.UpdatePointPosition( 
-                    computeShader, 
-                    spectrumResolution, 
-                    spectrogramDepth, 
-                    speed, 
-                    heightScale, 
-                    meshX, 
-                    meshZ, 
-                    spectrum, 
-                    GetComponent<MeshRenderer>().material, 
-                    mesh,
-                    debugShader);
-                break;
-        }        
+        gpuController.UpdatePointPosition( 
+            computeShader, 
+            spectrumResolution, 
+            spectrogramDepth, 
+            spectrumShiftTime, 
+            heightScale, 
+            meshX, 
+            meshZ, 
+            spectrum,            
+            mesh,
+            debugShader);
     }
 
     void FixedUpdate()
@@ -195,20 +169,6 @@ public class Visualizer : MonoBehaviour
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
 	}
-
-    // void OnDrawGizmos () {
-	// 	if (mesh == null) {
-	// 		return;
-	// 	}
-
-    //     for (int i = 0; i < vertices.Length; i++) {
-    //         Vector3 position = vertices[i];
-	// 		Gizmos.color = Color.green;
-	// 		Gizmos.DrawRay(position, normals[i] * 0.2f);
-	// 		Gizmos.color = Color.red;
-	// 		Gizmos.DrawRay(position, tangents[i] * 0.2f);
-	// 	}
-	// }
 
 
 }
