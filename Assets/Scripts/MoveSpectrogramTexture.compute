@@ -12,14 +12,13 @@ uint _Depth;
 [numthreads(8, 8, 1)]
 void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 {
-	if( id.y + _IndexOffset > _Depth)
+	if( id.y == _Depth -1)
 	{
-		_Spectrogram[uint2(id.x, id.y * _Resolution)] = _Spectrum[id.x];
+		_Spectrogram[id.xy] = _Spectrum[id.x];
 	}
 	else
 	{
-		_Spectrogram[uint2(id.x, id.y * _Resolution)] = 1; //_PrevSpectrogram[uint2(id.x, (id.y + _IndexOffset) * _Resolution)];	
-	}	
-	
+		_Spectrogram[id.xy] = _PrevSpectrogram[uint2(id.x, id.y + _IndexOffset)];	
+	}
 }
 

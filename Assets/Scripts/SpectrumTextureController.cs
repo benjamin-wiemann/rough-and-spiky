@@ -9,15 +9,16 @@ internal class SpectrumTextureController : GPUPointController
 
     static readonly int spectrumId = Shader.PropertyToID("_Spectrum");
 
-    public SpectrumTextureController(Material material, int maxResolution, int depth) : base(material, maxResolution, depth)
+    public SpectrumTextureController(Material material, int resolution, int depth) : base(material, resolution, depth)
     {
-        textureA = new RenderTexture(maxResolution, depth, 0);
+
+        textureA = new RenderTexture(resolution, depth, 0, RenderTextureFormat.RFloat);
         textureA.enableRandomWrite = true;
         textureA.Create();
-        textureB = new RenderTexture(maxResolution, depth, 0);
+        textureB = new RenderTexture(resolution, depth, 0, RenderTextureFormat.RFloat);
         textureB.enableRandomWrite = true;
         textureB.Create(); 
-        spectrumBuffer = new ComputeBuffer(maxResolution, 4);       
+        spectrumBuffer = new ComputeBuffer(resolution, 4);       
     }
 
     public override void ReleaseBuffers()
@@ -48,13 +49,15 @@ internal class SpectrumTextureController : GPUPointController
     {
         if (indexOffset > 0)
         {
-            spectrumBuffer.SetData(spectrum);
+
+            spectrumBuffer.SetData(spectrum);            
             cumulatedDeltaTime -= indexOffset * spectrumShiftTime;
         }
+        computeShader.SetBuffer(kernelHandle, spectrumId, spectrumBuffer);
         if (readFromBuffer == ReadFromBuffer.A)
         {
-            computeShader.SetTexture(kernelHandle, prevSpectrogramId, textureA);
-            computeShader.SetTexture(kernelHandle, spectrogramId, textureB);
+            computeShader.SetTexture(0, prevSpectrogramId, textureA);
+            computeShader.SetTexture(0, spectrogramId, textureB);
         }
         else
         {

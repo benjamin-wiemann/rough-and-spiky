@@ -24,7 +24,6 @@ public abstract class GPUPointController
     spectrogramId = Shader.PropertyToID("_Spectrogram"),
     prevSpectrogramId = Shader.PropertyToID("_PrevSpectrogram"),
     resolutionId = Shader.PropertyToID("_Resolution"),
-    stepId = Shader.PropertyToID("_Step"),
     indexOffsetId = Shader.PropertyToID("_IndexOffset"),
     depthId = Shader.PropertyToID("_Depth"),
     heightId = Shader.PropertyToID("_HeightScale"),
@@ -60,12 +59,10 @@ public abstract class GPUPointController
         {
             int kernelHandle = computeShader.FindKernel("SpectrumVisualizer");
 
-            float step = 2f / resolution;
             cumulatedDeltaTime += Time.deltaTime;
             int indexOffset = Mathf.FloorToInt(cumulatedDeltaTime / spectrumShiftTime);
 
             computeShader.SetInt(resolutionId, resolution);
-            computeShader.SetFloat(stepId, step);
             computeShader.SetInt(indexOffsetId, indexOffset);
             computeShader.SetInt(depthId, depth);
             SendSpectrumToShader(computeShader, depth, spectrumShiftTime, spectrum, kernelHandle, indexOffset);
