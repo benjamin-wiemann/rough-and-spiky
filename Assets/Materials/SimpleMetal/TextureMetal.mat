@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TextureMetal
-  m_Shader: {fileID: -6465566751694194690, guid: b567a4855aca9da4d871784959652ed8,
+  m_Shader: {fileID: -6465566751694194690, guid: e31f2bd529606944b8bbab5187498343,
     type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -66,7 +66,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Spectrogram:
-        m_Texture: {fileID: 10309, guid: 0000000000000000f000000000000000, type: 0}
+        m_Texture: {fileID: 2800000, guid: 4ba59214467613e4f8534910d674a69d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpectrogramTexture:
@@ -106,10 +106,12 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _Metallic: 1
+    - _HeightScale: 0
+    - _Metallic: 0
     - _Multiply: 0.7
     - _NoiseScale: 100
     - _OcclusionStrength: 1
+    - _Offset: 150
     - _Parallax: 0.005
     - _Power: 0.23
     - _QueueControl: 0
@@ -127,6 +129,7 @@ Material:
     - _Color: {r: 0.7264151, g: 0.5790762, b: 0.5790762, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Height: {r: 0, g: 0, b: 0, a: 0}
+    - _HeightScale: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &8657303241382773488

@@ -7,10 +7,10 @@ internal class SpectrumBufferController : GPUPointController
 
     ComputeBuffer positionsBufferB;
 
-    public SpectrumBufferController(Material material, int maxResolution, int depth) : base(material, maxResolution, depth)
+    public SpectrumBufferController(Material material, ComputeShader computeShader, int maxResolution, int depth) : base(material, computeShader, maxResolution, depth)
     {
-        positionsBufferA = new ComputeBuffer(maxResolution * ( depth + 1), 4);
-        positionsBufferB = new ComputeBuffer(maxResolution * ( depth + 1), 4);
+        positionsBufferA = new ComputeBuffer(maxResolution * ( depth), 4);
+        positionsBufferB = new ComputeBuffer(maxResolution * ( depth), 4);
     }
 
     protected override void BindToMaterial()
@@ -47,7 +47,7 @@ internal class SpectrumBufferController : GPUPointController
         {
             if (indexOffset > 0)
             {
-                positionsBufferA.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
+                positionsBufferA.SetData(spectrum, 0, spectrum.Length * (depth - 1), spectrum.Length);
                 cumulatedDeltaTime -= indexOffset * spectrumShiftTime;
             }
             computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferA);
@@ -57,7 +57,7 @@ internal class SpectrumBufferController : GPUPointController
         {
             if (indexOffset > 0)
             {
-                positionsBufferB.SetData(spectrum, 0, spectrum.Length * depth, spectrum.Length);
+                positionsBufferB.SetData(spectrum, 0, spectrum.Length * (depth - 1), spectrum.Length);
                 cumulatedDeltaTime -= indexOffset * spectrumShiftTime;
             }
             computeShader.SetBuffer(kernelHandle, prevSpectrogramId, positionsBufferB);
@@ -65,9 +65,15 @@ internal class SpectrumBufferController : GPUPointController
         }
     }
 
-    protected override void SetDebugSpectrogram()
+    protected override void SetDebugSpectrogram(int resolution, int depth)
     {
-        positionsBufferA.SetData(debugSpectrogram);
+        int debugSpectrumKernel = computeShader.FindKernel("SetDebugSpectrogram");
+        computeShader.SetBuffer(debugSpectrumKernel, spectrogramId, positionsBufferA);
+        computeShader.SetInt(resolutionId, resolution);
+        computeShader.SetInt(depthId, depth);
+        int groupsX = Mathf.CeilToInt(resolution / 8f);
+        int groupsY = Mathf.CeilToInt(depth / 8f);
+        computeShader.Dispatch(debugSpectrumKernel, groupsX, groupsY, 1);
         material.SetBuffer(spectrogramId, positionsBufferA);
     }
     

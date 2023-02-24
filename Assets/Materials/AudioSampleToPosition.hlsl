@@ -18,16 +18,16 @@ void SpectrumPosition_float ( float3 PositionIn, out float3 PositionOut, out flo
 	float highXLowZ = _Spectrogram[ceil(x) + floor(z) * _Resolution];
 	float highXHighZ = _Spectrogram[ceil(x) + ceil(z) * _Resolution];
 
-	float lowZ = lerp(lowXLowZ, highXLowZ, deltaX);
-	float highZ = lerp(lowXHighZ, highXHighZ, deltaX);
-	float lowX = lerp(lowXLowZ, lowXHighZ, deltaZ);
-	float highX = lerp(highXLowZ, highXHighZ, deltaZ);
+	float lowZ = (lerp(lowXLowZ, highXLowZ, deltaX) + _Offset) / _Offset;
+	float highZ = (lerp(lowXHighZ, highXHighZ, deltaX) + _Offset) / _Offset;
+	float lowX = (lerp(lowXLowZ, lowXHighZ, deltaZ) + _Offset) / _Offset;
+	float highX = (lerp(highXLowZ, highXHighZ, deltaZ) + _Offset) / _Offset;
 	
 
 	// interpolate on x axis
 	PositionOut = float3( PositionIn.x, lerp(lowX, highX, deltaX) * _HeightScale, PositionIn.z);
 
-	float2 derivatives = float2( (highX - lowX) * _HeightScale * _Resolution,  (highZ - lowZ) * _HeightScale * _Depth);
+	float2 derivatives = float2( (highX - lowX) * _HeightScale * _Resolution / _MeshX,  (highZ - lowZ) * _HeightScale * _Depth / _MeshZ);
 	TangentOut = float3(1.0, derivatives.x , 0.0);
 	NormalOut = cross(float3(0.0, derivatives.y, 1.0), TangentOut);
 }

@@ -24,8 +24,8 @@ public class Visualizer : MonoBehaviour
     int spectrogramDepth = 8;
     int spectrogramDepthOld;
 
-    [SerializeField, Range(0.0005f, 0.01f)]
-    float heightScale = 0.001f;
+    [SerializeField, Range(0.1f, 10f)]
+    float heightScale = 1f;
 
     [SerializeField, Range(0.005f, 0.1f)]
     float spectrumShiftTime = 0.016f;
@@ -128,10 +128,10 @@ public class Visualizer : MonoBehaviour
             switch( shaderType )      
             {
                 case ShaderType.ComputeBuffer:
-                    gpuController = new SpectrumBufferController(  GetComponent<MeshRenderer>().material, spectrumResolution, spectrogramDepth);
+                    gpuController = new SpectrumBufferController(  GetComponent<MeshRenderer>().material, computeShader, spectrumResolution, spectrogramDepth);
                     break;
                 case ShaderType.Texture:
-                    gpuController = new SpectrumTextureController(  GetComponent<MeshRenderer>().material, spectrumResolution, spectrogramDepth);
+                    gpuController = new SpectrumTextureController(  GetComponent<MeshRenderer>().material, computeShader, spectrumResolution, spectrogramDepth);
                     break;
             } 
             spectrogramChanged = false;
@@ -143,7 +143,6 @@ public class Visualizer : MonoBehaviour
 
         }
         gpuController.UpdatePointPosition( 
-            computeShader, 
             spectrumResolution, 
             spectrogramDepth, 
             spectrumShiftTime, 

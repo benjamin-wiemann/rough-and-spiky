@@ -1,4 +1,7 @@
 #pragma kernel SpectrumVisualizer
+#pragma kernel SetDebugSpectrogram
+
+#define PI 3.14159265358979323846
 
 RWStructuredBuffer<float> _Spectrogram;
 RWStructuredBuffer<float> _PrevSpectrogram;
@@ -11,8 +14,13 @@ uint _Depth;
 void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 {
 
-	int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth);
+	int clampedIndex = clamp( id.y + _IndexOffset, id.y, _Depth - 1);
 	_Spectrogram[id.x + id.y * _Resolution] = _PrevSpectrogram[id.x +  clampedIndex * _Resolution];	
 
 }
 
+[numthreads(8,8,1)]
+void SetDebugSpectrogram (uint3 id : SV_DispatchThreadID)
+{    
+    _Spectrogram[id.x + id.y * _Resolution] = 100 * ((sin(2 * (float) id.y / _Depth * PI) + sin(2 * id.x / (float) _Resolution * PI)) - 1);	
+}
