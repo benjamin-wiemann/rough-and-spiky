@@ -11,7 +11,7 @@ public class Visualizer : MonoBehaviour
 
     public enum ShaderType { Texture, ComputeBuffer }
 
-    const int maxResolution = 1024;
+    const int maxResolution = 4096;
 
 
     // Number of samples in a spectrum
@@ -27,7 +27,7 @@ public class Visualizer : MonoBehaviour
     [SerializeField, Range(0.1f, 10f)]
     float heightScale = 1f;
 
-    [SerializeField, Range(0.005f, 0.1f)]
+    [SerializeField, Range(0.005f, 0.5f)]
     float spectrumShiftTime = 0.016f;
 
     // Vertices per unit in mesh

@@ -60,7 +60,7 @@ namespace ProceduralMesh
 			vertex.position.z = z * triangleHeigth;
 
             vertex.texCoord0.x = uOffset;
-            vertex.texCoord0.y = vertex.position.z / (dimZ + 0.5f / Resolution) + 0.5f;
+            vertex.texCoord0.y = vertex.position.z / dimZ;
 
 			stream.SetVertex(vi, vertex);
             vi += 1;
@@ -74,10 +74,10 @@ namespace ProceduralMesh
 
                 if (z > 0) {
                     stream.SetTriangle(
-                        ti + 0, vi + int3(-NumX - 2, -1, -NumX - 1)
+                        ti + 0, vi + tA //int3(-NumX - 2, -1, -NumX - 1)
                     );
                     stream.SetTriangle(
-                        ti + 1, vi + int3(-NumX - 1, -1, 0)
+                        ti + 1, vi + tB //int3(-NumX - 1, -1, 0)
                     );
                 }
             }

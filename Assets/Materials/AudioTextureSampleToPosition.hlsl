@@ -2,6 +2,7 @@ int _Resolution;
 int _Depth;
 float _MeshX;
 float _MeshZ;
+float _SpectrumDeltaTime;
 
 void SpectrumPosition_float ( float2 UVIn, out float3 NormalOut, out float3 TangentOut) {
 	// clamp overlapping triangles when calculating x index

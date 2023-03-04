@@ -187,10 +187,9 @@ public class TestSuite
         NativeArray<Vector2> uv = new NativeArray<Vector2>(4, Allocator.Persistent);
         meshData.GetUVs(0,uv);
         Assert.That(uv[0].x, Is.EqualTo(0f).Within(testTolerance));
-        Assert.That(uv[0].y, Is.EqualTo(0.5f).Within(testTolerance));
+        Assert.That(uv[0].y, Is.EqualTo(0f).Within(testTolerance));
         Assert.That(uv[3].x, Is.EqualTo(1f).Within(testTolerance));
-        float v = 1f /1.5f + 0.5f;
-        Assert.That(uv[3].y, Is.EqualTo(v).Within(testTolerance));
+        Assert.That(uv[3].y, Is.EqualTo(1).Within(testTolerance));
         outVertices.Dispose();
         uv.Dispose();
 
@@ -214,8 +213,16 @@ public class TestSuite
         Assert.That(outVertices[0].z, Is.EqualTo(0f).Within(testTolerance));
         Assert.That(outVertices[29].x, Is.EqualTo(1.125f).Within(testTolerance));
         Assert.That(outVertices[29].z, Is.EqualTo(2 ).Within(testTolerance));   
+        uv = new NativeArray<Vector2>(30, Allocator.Persistent);
+        meshData.GetUVs(0,uv);
+        Assert.That(uv[0].x, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(uv[0].y, Is.EqualTo(0f).Within(testTolerance));
+        Assert.That(uv[24].x, Is.EqualTo(4f/4.5f).Within(testTolerance));
+        Assert.That(uv[29].x, Is.EqualTo(1f).Within(testTolerance));
+        Assert.That(uv[29].y, Is.EqualTo(1f).Within(testTolerance));
         outVertices.Dispose();
-        
+        uv.Dispose();
+               
 
         triangleGrid.Resolution = 1;
         triangleGrid.dimZ = 1;

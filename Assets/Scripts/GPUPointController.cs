@@ -21,7 +21,7 @@ public abstract class GPUPointController
     protected ReadFromBuffer readFromBuffer = ReadFromBuffer.A;
 
     protected float cumulatedDeltaTime = 0;
-
+    
     protected static readonly int
     spectrogramId = Shader.PropertyToID("_Spectrogram"),
     prevSpectrogramId = Shader.PropertyToID("_PrevSpectrogram"),
@@ -30,7 +30,10 @@ public abstract class GPUPointController
     depthId = Shader.PropertyToID("_Depth"),
     meshXId = Shader.PropertyToID("_MeshX"),
     meshZId = Shader.PropertyToID("_MeshZ"),
-    heightId = Shader.PropertyToID("_HeightScale");
+    heightId = Shader.PropertyToID("_HeightScale"),
+    spectrumDeltaTimeId = Shader.PropertyToID("_SpectrumDeltaTime"),
+    triangleHeightId = Shader.PropertyToID("_TriangleHeight"),
+    triangleWidthId = Shader.PropertyToID("_TriangleWidth");
 
     public GPUPointController( Material material, ComputeShader computeShader, int maxResolution, int depth )
     {
@@ -45,7 +48,6 @@ public abstract class GPUPointController
 
     public abstract void ReleaseBuffers();
     
-
     public void UpdatePointPosition(
         int resolution,
         int depth, 
@@ -83,6 +85,10 @@ public abstract class GPUPointController
         material.SetFloat(heightId, heightScale);
         material.SetFloat(meshXId, meshX);
         material.SetFloat(meshZId, meshZ);
+        material.SetFloat(triangleHeightId, meshZ / Mathf.Round( resolution * meshZ * 2f / Mathf.Sqrt(3f) ));
+        material.SetFloat(triangleWidthId, meshX / Mathf.Round( resolution * meshX  ));
+        float spectrumDeltaTime = (cumulatedDeltaTime % spectrumShiftTime)/spectrumShiftTime;
+        material.SetFloat(spectrumDeltaTimeId, spectrumDeltaTime);
     }
 
     protected abstract void SetDebugSpectrogram(int resolution, int depth);
@@ -93,29 +99,4 @@ public abstract class GPUPointController
 
     protected abstract void BindToMaterial();
 
-    // void GenerateDebugSpectrogram(int resolution, int depth)
-    // {
-    //     bool init = false;
-    //     if( debugSpectrogram == null)
-    //     {
-    //         debugSpectrogram = new float[(depth) * resolution];
-    //         init = true;
-    //     }
-    //     if( debugSpectrogram.Length != (depth) * resolution)
-    //     {
-    //         debugSpectrogram = new float[(depth) * resolution];
-    //         init = true;
-    //     }
-    //     if( init )
-    //     {
-    //         for( int i = 0; i < depth; i++ )
-    //         {
-    //             for( int j = 0; j < resolution; j++ )
-    //             {
-    //                 debugSpectrogram[j + i * resolution] = 100f * ((Mathf.Sin(2f * (float) i / (float) depth * Mathf.PI) + Mathf.Sin(2f * (float) j / (float) resolution * Mathf.PI)) - 1);
-    //             }
-    //         }
-    //     }
-    //     SetDebugSpectrogram(resolution, depth);
-    // }
 }
