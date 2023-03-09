@@ -8,6 +8,15 @@ float _SpectrumDeltaTime;
 float _TriangleHeight;
 float _TriangleWidth;
 
+typedef struct 
+{
+  float lowU;
+  float highU;
+  float lowV;
+  float highV;
+  float middle;
+} interpolationset;
+
 
 float SampleBuffer(in float2 uvIndex) 
 {
@@ -19,43 +28,57 @@ float SampleBuffer(in float2 uvIndex)
 	float highXLowZ = _Spectrogram[ceil(uIndex) + floor(vIndex) * _Resolution];
 	float highXHighZ = _Spectrogram[ceil(uIndex) + ceil(vIndex) * _Resolution];
 
-	float4 uvOut;
-	uvOut.w = (lerp(lowXLowZ, highXLowZ, delta.x) + _Offset) / _Offset;
-	uvOut.x = (lerp(lowXHighZ, highXHighZ, delta.x) + _Offset) / _Offset;
-	uvOut.y = (lerp(lowXLowZ, lowXHighZ, delta.y) + _Offset) / _Offset;
-	uvOut.z = (lerp(highXLowZ, highXHighZ, delta.y) + _Offset) / _Offset;
+	float2 interpolated;
+	interpolated.x = (lerp(lowXLowZ, lowXHighZ, delta.y));
+	interpolated.y = (lerp(highXLowZ, highXHighZ, delta.y));
 
-	return lerp(uvOut.y, uvOut.z, delta.x);
+	return (lerp(interpolated.x, interpolated.y, delta.x) + _Offset) / _Offset;
+}
+
+// float ApplyOffset(float val)
+// {
+// 	return val + _Offset / _Offset;
+// }
+
+float3 GetDerivativeU( interpolationset set)
+{
+	return float3( normalize(float2(_TriangleWidth, (set.highU - set.middle) * _HeightScale)) 
+			+ normalize(float2( _TriangleWidth, (set.middle - set.lowU) * _HeightScale)), 
+			0);	
+}
+
+float3 GetDerivativeV( interpolationset set)
+{
+	return float3( 0,
+	 		normalize(float2((set.highV - set.middle) * _HeightScale, _TriangleHeight)) 
+			+ normalize(float2((set.middle - set.lowV) * _HeightScale, _TriangleHeight)) );
 }
 
 void SpectrumPosition_float ( in float3 PositionIn, in float2 UVIn, out float3 PositionOut, out float3 NormalOut, out float3 TangentOut) 
 {
-	
 	float2 uvIndex;
 	uvIndex.x = UVIn.x * (_Resolution - 1); 
 	uvIndex.y =  UVIn.y * (_Depth - 1) + _SpectrumDeltaTime;
 
-	PositionOut = float3(PositionIn.x, SampleBuffer(uvIndex) * _HeightScale, PositionIn.z);
-	
-	float2 derivativesU;
 	float2 uInterval = float2(_TriangleWidth / _MeshX, 0);
-	float2x3 neighborsU = float2x3( 
-		PositionIn.x - _TriangleWidth, SampleBuffer(uvIndex - uInterval) * _HeightScale, PositionIn.z,
-		PositionIn.x + _TriangleWidth, SampleBuffer(uvIndex + uInterval) * _HeightScale, PositionIn.z);
-	
-	float2 derivativesV;
 	float2 vInterval = float2(0, _TriangleHeight / _MeshZ);
-	float2x3 neighborsV = float2x3( 
-		PositionIn.x, SampleBuffer(uvIndex - vInterval) * _HeightScale, PositionIn.z - _TriangleWidth,
-		PositionIn.x, SampleBuffer(uvIndex + vInterval) * _HeightScale, PositionIn.z + _TriangleWidth);
-	
-	// TangentOut = TangentOut/ abs(TangentOut);
-	// NormalOut = normalize(cross(float3(0.0, derivatives.y, 1.0), float3(1.0, derivatives.x , 0.0)));
-	
-	TangentOut = normalize(neighborsU._21_22_23 - PositionOut) + normalize(PositionOut - neighborsU._11_12_13);
-	float3 derivativeV = normalize(neighborsV._21_22_23 - PositionOut) + normalize(PositionOut - neighborsV._11_12_13);
-	NormalOut = cross(derivativeV, TangentOut);
+	// float2 uInterval = float2(1 / _Resolution, 0);
+	// float2 vInterval = float2(0, 2 / (sqrt(3) * _Resolution) );
 
+	interpolationset set;
+	set.lowU = SampleBuffer(uvIndex - uInterval);
+	set.highU = SampleBuffer(uvIndex + uInterval);
+	set.lowV = SampleBuffer(uvIndex - vInterval);
+	set.highV = SampleBuffer(uvIndex + vInterval);
+	set.middle = SampleBuffer(uvIndex);
+	
+	// float2 derivatives = float2( (highX - lowX) * _HeightScale * _Resolution / _MeshX,  (highZ - lowZ) * _HeightScale * _Depth / _MeshZ);
+	TangentOut = GetDerivativeU( set );
+	float3 derivativeV = GetDerivativeV( set );
+	NormalOut = cross(derivativeV, TangentOut);
+	PositionOut = float3( PositionIn.x, set.middle * _HeightScale, PositionIn.z);
 }
+
+
 
 
