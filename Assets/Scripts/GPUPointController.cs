@@ -49,10 +49,11 @@ public abstract class GPUPointController
     public abstract void ReleaseBuffers();
     
     public void UpdatePointPosition(
-        int resolution,
+        int spectrumResolution,
         int depth, 
         float spectrumShiftTime, 
-        float heightScale, 
+        float heightScale,
+        int meshResolution, 
         float meshX,
         float meshZ,
         float[] spectrum, 
@@ -66,28 +67,31 @@ public abstract class GPUPointController
             cumulatedDeltaTime += Time.deltaTime;
             int indexOffset = Mathf.FloorToInt(cumulatedDeltaTime / spectrumShiftTime);
 
-            computeShader.SetInt(resolutionId, resolution);
+            computeShader.SetInt(resolutionId, spectrumResolution);
             computeShader.SetInt(indexOffsetId, indexOffset);
             computeShader.SetInt(depthId, depth);
             SendSpectrumToShader(computeShader, depth, spectrumShiftTime, spectrum, kernelHandle, indexOffset);
 
-            int groupsX = Mathf.CeilToInt(resolution / 8f);
+            int groupsX = Mathf.CeilToInt(spectrumResolution / 8f);
             int groupsY = Mathf.CeilToInt(depth / 8f);
             computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
             BindToMaterial();            
         }
         else
         {
-            SetDebugSpectrogram(resolution, depth);
+            SetDebugSpectrogram(spectrumResolution, depth);
         }
-        material.SetInteger(resolutionId, resolution);
+        material.SetInteger(resolutionId, spectrumResolution);
         material.SetInteger(depthId, depth);
         material.SetFloat(heightId, heightScale);
         material.SetFloat(meshXId, meshX);
         material.SetFloat(meshZId, meshZ);
-        material.SetFloat(triangleHeightId, meshZ / Mathf.Round( resolution * meshZ * 2f / Mathf.Sqrt(3f) ));
-        material.SetFloat(triangleWidthId, meshX / Mathf.Round( resolution * meshX  ));
-        float spectrumDeltaTime = (cumulatedDeltaTime % spectrumShiftTime)/spectrumShiftTime;
+        float triangleHeight = meshZ / Mathf.Round( meshResolution * meshZ * 2f / Mathf.Sqrt(3f) );
+        float triangleWidth = meshX / Mathf.Round( meshResolution * meshX);
+        material.SetFloat(triangleHeightId, triangleHeight);
+        material.SetFloat(triangleWidthId, triangleWidth);
+        // Debug.Log("Triangle width: " + triangleWidth + " height: " + triangleHeight);
+        float spectrumDeltaTime = (cumulatedDeltaTime % spectrumShiftTime) / spectrumShiftTime;
         material.SetFloat(spectrumDeltaTimeId, spectrumDeltaTime);
     }
 

@@ -15,13 +15,13 @@ public class Visualizer : MonoBehaviour
 
 
     // Number of samples in a spectrum
-    [SerializeField, Range(8, maxResolution)]
+    [SerializeField, Range(2, maxResolution)]
     public int spectrumResolution = 512;
     int spectrumResolutionOld;
 
     // Number of spectrums in the spectrogram
-    [SerializeField, Range(8, 8192)]
-    int spectrogramDepth = 8;
+    [SerializeField, Range(2, 8192)]
+    int spectrogramDepth = 512;
     int spectrogramDepthOld;
 
     [SerializeField, Range(0.1f, 10f)]
@@ -31,7 +31,7 @@ public class Visualizer : MonoBehaviour
     float spectrumShiftTime = 0.016f;
 
     // Vertices per unit in mesh
-    [SerializeField, Range(8, 1024)]
+    [SerializeField, Range(2, 1024)]
     int meshResolution = 128;
     int meshResolutionOld;
 
@@ -147,6 +147,7 @@ public class Visualizer : MonoBehaviour
             spectrogramDepth, 
             spectrumShiftTime, 
             heightScale, 
+            meshResolution,
             meshX, 
             meshZ, 
             spectrum,            

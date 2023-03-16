@@ -14,13 +14,13 @@ float _Set[5];
 [numthreads(1,1,1)]
 void TestSampleBuffer (uint3 id : SV_DispatchThreadID)
 {
-    _Result[0] = SampleBuffer(_UvIndex);
+    _Result[0] = SampleBuffer(_UvIndex).value;
 }
 
 [numthreads(1,1,1)]
 void TestGetDerivativeU (uint3 id : SV_DispatchThreadID)
 {
-    interpolationset set;
+    t_InterpolationSet set;
     set.lowU = _Set[0];
     set.highU = _Set[1];    
     set.lowV = _Set[2];
@@ -35,7 +35,7 @@ void TestGetDerivativeU (uint3 id : SV_DispatchThreadID)
 [numthreads(1,1,1)]
 void TestGetDerivativeV (uint3 id : SV_DispatchThreadID)
 {
-    interpolationset set;
+    t_InterpolationSet set;
     set.lowU = _Set[0];
     set.highU = _Set[1];    
     set.lowV = _Set[2];

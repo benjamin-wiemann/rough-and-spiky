@@ -111,7 +111,7 @@ Material:
     - _Multiply: 0.7
     - _NoiseScale: 100
     - _OcclusionStrength: 1
-    - _Offset: 1
+    - _Offset: 150
     - _Parallax: 0.005
     - _Power: 0.23
     - _QueueControl: 0

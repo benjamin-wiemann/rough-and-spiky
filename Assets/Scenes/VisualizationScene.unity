@@ -1630,17 +1630,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12b6a2bc7dffa2c438e4d8ab5e7334d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spectrumResolution: 512
-  spectrogramDepth: 512
+  spectrumResolution: 4
+  spectrogramDepth: 4
   heightScale: 1
   spectrumShiftTime: 0.0963
-  meshResolution: 512
+  meshResolution: 8
   meshX: 1
   meshZ: 1
   shaderType: 1
   computeShader: {fileID: 7200000, guid: 91eb292fef05447489f09406963591a6, type: 3}
   audioProcessor: {fileID: 1997742421}
-  debugShader: 0
+  debugShader: 1
 --- !u!4 &2046193657
 Transform:
   m_ObjectHideFlags: 0
