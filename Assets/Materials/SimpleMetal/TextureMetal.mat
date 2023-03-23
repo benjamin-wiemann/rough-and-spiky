@@ -91,6 +91,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AccelerateStart: -0.5
     - _AlphaClip: 0
     - _Blend: 0
     - _BumpScale: 1
@@ -110,13 +111,16 @@ Material:
     - _Metallic: 0
     - _Multiply: 0.7
     - _NoiseScale: 100
+    - _NumClones: 2
     - _OcclusionStrength: 1
     - _Offset: 150
     - _Parallax: 0.005
-    - _Power: 0.23
+    - _Power: 0.92
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Radius: 2
     - _ReceiveShadows: 1
+    - _Smooth: 0
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

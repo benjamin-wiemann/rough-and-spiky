@@ -3,18 +3,21 @@
 #pragma kernel TestGetDerivativeV
 
 float _Offset;
+bool _Smooth;
 
 #include "../../Materials/AudioSampleToPosition.hlsl"
 
 RWStructuredBuffer<float> _Result;
-float2 _UvIndex;
+float4 _UvIndex;
 
 float _Set[5];
 
 [numthreads(1,1,1)]
 void TestSampleBuffer (uint3 id : SV_DispatchThreadID)
 {
-    _Result[0] = SampleBuffer(_UvIndex).value;
+    _Result[0] = SampleBuffer(_UvIndex.xy).value;
+    _Result[1] = SampleBuffer(_UvIndex.xy).uDiff;
+    _Result[2] = SampleBuffer(_UvIndex.xy).vDiff;
 }
 
 [numthreads(1,1,1)]

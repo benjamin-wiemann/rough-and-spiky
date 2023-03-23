@@ -168,6 +168,7 @@ public class Visualizer : MonoBehaviour
 		MeshJob<SharedTriangleGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
+        mesh.RecalculateBounds();
 	}
 
 

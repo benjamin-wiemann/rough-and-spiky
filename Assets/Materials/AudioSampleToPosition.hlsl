@@ -24,23 +24,24 @@ typedef struct
 	float vDiff;
 } t_BSample;
 
-
+// This function interpolates between the buffer indices which are closest to uvIndex
+// It returns the result a well as the gradient in U and V direction
 t_BSample SampleBuffer(in float2 uvIndex) 
 {
 	t_BSample result;
-	float uIndex = clamp(uvIndex.x, 0, _Resolution -1);
-	float vIndex = clamp(uvIndex.y, 0, _Depth - 1);
-	float2 delta = uvIndex - floor(uvIndex);
+	float uIndex = clamp(abs(uvIndex.x), 0, _Resolution -1);
+	float vIndex = clamp(abs(uvIndex.y), 0, _Depth - 1);
+	float2 delta = abs(uvIndex) - floor(abs(uvIndex));
 
 	float lowULowV = _Spectrogram[floor(uIndex) + floor(clamp(vIndex - 1, 0, _Resolution -1)) * _Resolution];
 	float lowUMidV = _Spectrogram[floor(uIndex) + floor(vIndex) * _Resolution];
-	float lowUHighV = (_Spectrogram[floor(uIndex) + ceil(vIndex) * _Resolution] + lowUMidV) / 2;
+	float lowUHighV = _Spectrogram[floor(uIndex) + ceil(vIndex) * _Resolution];
 
 	float highULowV = _Spectrogram[ceil(uIndex) + floor(clamp(vIndex - 1, 0, _Resolution -1)) * _Resolution];
 	float highUMidV = _Spectrogram[ceil(uIndex) + floor(vIndex) * _Resolution];
 	float highUHighV = _Spectrogram[ceil(uIndex) + ceil(vIndex) * _Resolution];
 
-	// Apply smoothing depending on if _Smooth parameter is true
+	// Apply smoothing depending on if _Smooth flag is set
 	lowUHighV = (lowUHighV + lowUMidV * _Smooth ) / ( 1 + _Smooth);
 	lowUMidV = (lowUMidV + lowULowV * _Smooth ) / ( 1 + _Smooth);
 	
@@ -55,8 +56,8 @@ t_BSample SampleBuffer(in float2 uvIndex)
 	uInterpolated.x = (lerp(lowUMidV, highUMidV, delta.x));
 	uInterpolated.y = (lerp(lowUHighV, highUHighV, delta.x));
 
-	result.uDiff = (vInterpolated.y - vInterpolated.x) / _Offset;
-	result.vDiff = (uInterpolated.y - uInterpolated.x) / _Offset;
+	result.uDiff = sign(uvIndex.x) * (vInterpolated.x - vInterpolated.y) / _Offset;
+	result.vDiff = sign(uvIndex.y) * (uInterpolated.x - uInterpolated.y) / _Offset;
 
 	result.value = (lerp(vInterpolated.x, vInterpolated.y, delta.x) + _Offset) / _Offset;
 
@@ -86,7 +87,7 @@ void SpectrumPosition_float ( in float3 PositionIn, in float2 UVIn, out float3 P
 {
 	float2 uvIndex;
 	uvIndex.x = UVIn.x * (_Resolution - 1); 
-	uvIndex.y =  UVIn.y * (_Depth - 1) + _SpectrumDeltaTime;
+	uvIndex.y =  UVIn.y * (_Depth - 1) + _AccelerateStart * pow(_SpectrumDeltaTime, 2) + (1 - _AccelerateStart) * _SpectrumDeltaTime;
 
 	// float2 uInterval = float2(_TriangleWidth / _MeshX, 0);
 	// float2 vInterval = float2(0, _TriangleHeight / _MeshZ);
