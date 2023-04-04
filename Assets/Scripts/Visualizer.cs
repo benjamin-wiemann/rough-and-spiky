@@ -24,7 +24,7 @@ public class Visualizer : MonoBehaviour
     int spectrogramDepth = 512;
     int spectrogramDepthOld;
 
-    [SerializeField, Range(0.1f, 10f)]
+    [SerializeField, Range(0f, 10f)]
     float heightScale = 1f;
 
     [SerializeField, Range(0.005f, 0.5f)]

@@ -4,11 +4,13 @@
 
 float _Offset;
 bool _Smooth;
+float _AccelerateStart;
 
 #include "../../Materials/AudioSampleToPosition.hlsl"
 
 RWStructuredBuffer<float> _Result;
 float4 _UvIndex;
+
 
 float _Set[5];
 

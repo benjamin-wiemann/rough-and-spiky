@@ -22,5 +22,5 @@ void SpectrumVisualizer (uint3 id: SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void SetDebugSpectrogram (uint3 id : SV_DispatchThreadID)
 {    
-    _Spectrogram[id.x + id.y * _Resolution] = id.y;//100 * ((sin(2 * (float) id.y / _Depth * PI) + sin(2 * id.x / (float) _Resolution * PI)) - 1);	
+    _Spectrogram[id.x + id.y * _Resolution] = id.x / (float) _Resolution + id.y / (float) _Depth;//100 * ((sin(2 * (float) id.y / _Depth * PI) + sin(2 * id.x / (float) _Resolution * PI)) - 1);	
 }

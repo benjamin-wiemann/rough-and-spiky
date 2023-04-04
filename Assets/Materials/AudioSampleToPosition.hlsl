@@ -1,12 +1,12 @@
 StructuredBuffer<float> _Spectrogram;
-int _Resolution;
 int _Depth;
 float _HeightScale;
-float _MeshX;
-float _MeshZ;
-float _SpectrumDeltaTime;
+// float _MeshX;
+// float _MeshZ;
+// float _SpectrumDeltaTime;
 float _TriangleHeight;
 float _TriangleWidth;
+int _Resolution;
 
 typedef struct 
 {
@@ -29,17 +29,17 @@ typedef struct
 t_BSample SampleBuffer(in float2 uvIndex) 
 {
 	t_BSample result;
-	float uIndex = clamp(abs(uvIndex.x), 0, _Resolution -1);
-	float vIndex = clamp(abs(uvIndex.y), 0, _Depth - 1);
+	float uIndex = clamp(abs(uvIndex.x), 0, (float) _Resolution -1);
+	float vIndex = clamp(abs(uvIndex.y), 0, (float) _Depth - 1);
 	float2 delta = abs(uvIndex) - floor(abs(uvIndex));
 
-	float lowULowV = _Spectrogram[floor(uIndex) + floor(clamp(vIndex - 1, 0, _Resolution -1)) * _Resolution];
-	float lowUMidV = _Spectrogram[floor(uIndex) + floor(vIndex) * _Resolution];
-	float lowUHighV = _Spectrogram[floor(uIndex) + ceil(vIndex) * _Resolution];
+	float lowULowV = _Spectrogram[floor(uIndex) + floor(clamp(vIndex - 1, 0, _Depth -1)) * (float) _Resolution];
+	float lowUMidV = _Spectrogram[floor(uIndex) + floor(vIndex) * (float) _Resolution];
+	float lowUHighV = _Spectrogram[floor(uIndex) + ceil(vIndex) * (float) _Resolution];
 
-	float highULowV = _Spectrogram[ceil(uIndex) + floor(clamp(vIndex - 1, 0, _Resolution -1)) * _Resolution];
-	float highUMidV = _Spectrogram[ceil(uIndex) + floor(vIndex) * _Resolution];
-	float highUHighV = _Spectrogram[ceil(uIndex) + ceil(vIndex) * _Resolution];
+	float highULowV = _Spectrogram[ceil(uIndex) + floor(clamp(vIndex - 1, 0, (float) _Depth -1)) * (float) _Resolution];
+	float highUMidV = _Spectrogram[ceil(uIndex) + floor(vIndex) * (float) _Resolution];
+	float highUHighV = _Spectrogram[ceil(uIndex) + ceil(vIndex) * (float) _Resolution];
 
 	// Apply smoothing depending on if _Smooth flag is set
 	lowUHighV = (lowUHighV + lowUMidV * _Smooth ) / ( 1 + _Smooth);
@@ -55,9 +55,6 @@ t_BSample SampleBuffer(in float2 uvIndex)
 	float2 uInterpolated;
 	uInterpolated.x = (lerp(lowUMidV, highUMidV, delta.x));
 	uInterpolated.y = (lerp(lowUHighV, highUHighV, delta.x));
-
-	result.uDiff = sign(uvIndex.x) * (vInterpolated.x - vInterpolated.y) / _Offset;
-	result.vDiff = sign(uvIndex.y) * (uInterpolated.x - uInterpolated.y) / _Offset;
 
 	result.value = (lerp(vInterpolated.x, vInterpolated.y, delta.x) + _Offset) / _Offset;
 
@@ -83,31 +80,13 @@ float3 GetDerivativeV( t_InterpolationSet set)
 			+ normalize(float2((set.middle - set.lowV) * _HeightScale, _TriangleHeight))) ;
 }
 
-void SpectrumPosition_float ( in float3 PositionIn, in float2 UVIn, out float3 PositionOut, out float3 NormalOut, out float3 TangentOut) 
+void SpectrumPosition_float ( in float3 PositionIn, in float2 UVIn, out float3 PositionOut) 
 {
 	float2 uvIndex;
 	uvIndex.x = UVIn.x * (_Resolution - 1); 
-	uvIndex.y =  UVIn.y * (_Depth - 1) + _AccelerateStart * pow(_SpectrumDeltaTime, 2) + (1 - _AccelerateStart) * _SpectrumDeltaTime;
+	uvIndex.y =  UVIn.y * (_Depth - 1) + sign(UVIn.y) * ( _AccelerateStart * pow(_SpectrumDeltaTime, 2) + (1 - _AccelerateStart) * _SpectrumDeltaTime );
 
-	// float2 uInterval = float2(_TriangleWidth / _MeshX, 0);
-	// float2 vInterval = float2(0, _TriangleHeight / _MeshZ);
-	// float2 uInterval = float2(1 / _Resolution, 0);
-	// float2 vInterval = float2(0, 2 / (sqrt(3) * _Resolution) );
-
-	// t_InterpolationSet set;
-	// set.lowU = SampleBuffer(uvIndex - uInterval);
-	// set.highU = SampleBuffer(uvIndex + uInterval);
-	// set.lowV = SampleBuffer(uvIndex - vInterval);
-	// set.highV = SampleBuffer(uvIndex + vInterval);
-	// set.middle = SampleBuffer(uvIndex);
 	t_BSample spectrumSample = SampleBuffer(uvIndex);
 	
-	// float2 derivatives = float2( (highU - lowU) * _HeightScale * _Resolution / _MeshX,  (highV - lowV) * _HeightScale * _Depth / _MeshZ);
-
-	// TangentOut = GetDerivativeU( set );
-	// float3 derivativeV = GetDerivativeV( set );
-	TangentOut = float3( _MeshX / _Resolution, spectrumSample.uDiff * _HeightScale, 0 );
-	float3 derivativeV = float3( 0, spectrumSample.vDiff * _HeightScale, _MeshZ / _Depth );
-	NormalOut = cross( derivativeV, TangentOut );
 	PositionOut = float3( PositionIn.x, spectrumSample.value * _HeightScale, PositionIn.z );
 }
