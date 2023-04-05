@@ -62,49 +62,10 @@ public class ShaderTestSuite
         float[] result = new float[3];
         resultBuffer.GetData(result);
         Assert.That( result[0], Is.EqualTo(0.5f).Within(0.000001f) );
-        Assert.That( result[1], Is.EqualTo(-1f/3f).Within(0.000001f) );
-        Assert.That( result[2], Is.EqualTo(2f/3f).Within(0.000001f) );
         
         spectrogramBuffer.Release();
         resultBuffer.Release();
         
     }
 
-    [UnityTest]
-    public IEnumerator GetDerivativeReturnsAngleBisector()
-    {
-        SceneManager.LoadScene("TestingScene", LoadSceneMode.Additive);
-        yield return null;
-        Scene scene = SceneManager.GetSceneByName("TestingScene");
-        SceneManager.SetActiveScene(scene);
-
-        int setId = Shader.PropertyToID("_Set");
-
-        ComputeShader computeShader = GetShader();
-        computeShader.SetFloat(triangleHeightId, 1f);
-        computeShader.SetFloat(triangleWidthId, 1f);
-        computeShader.SetFloat(heightId, 1f);
-        float[] interpolationSet = {1f, 0, 0, 0, 3f, 0, 0, 0,  1f, 0, 0, 0, 3f, 0, 0, 0, 2.5f, 0,0,0};
-        computeShader.SetFloats( setId, interpolationSet );
-
-        int resultId = Shader.PropertyToID("_Result");
-        int kernel = computeShader.FindKernel("TestGetDerivativeU");
-        ComputeBuffer resultBuffer = new ComputeBuffer(3, 4);
-        computeShader.SetBuffer(kernel, resultId, resultBuffer);
-        computeShader.Dispatch(kernel, 1, 1, 1);
-        float[] result = new float[3];
-        resultBuffer.GetData(result);
-        Assert.That( result[2], Is.EqualTo(0) );
-        Assert.That( Mathf.Atan(result[1] / result[0]), Is.EqualTo((Mathf.Atan(0.5f) + Mathf.Atan(1.5f)) / 2 ).Within(0.000001f) );
-
-        kernel = computeShader.FindKernel("TestGetDerivativeV");
-        computeShader.SetBuffer(kernel, resultId, resultBuffer);
-        computeShader.Dispatch(kernel, 1, 1, 1);
-        resultBuffer.GetData(result);
-        Assert.That( result[0], Is.EqualTo(0) );
-        Assert.That( Mathf.Atan(result[1] / result[2]), Is.EqualTo((Mathf.Atan(0.5f) + Mathf.Atan(1.5f)) / 2 ).Within(0.000001f) );
-
-        resultBuffer.Release();
-        
-    }
 }

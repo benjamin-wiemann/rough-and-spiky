@@ -17,37 +17,5 @@ float _Set[5];
 [numthreads(1,1,1)]
 void TestSampleBuffer (uint3 id : SV_DispatchThreadID)
 {
-    _Result[0] = SampleBuffer(_UvIndex.xy).value;
-    _Result[1] = SampleBuffer(_UvIndex.xy).uDiff;
-    _Result[2] = SampleBuffer(_UvIndex.xy).vDiff;
-}
-
-[numthreads(1,1,1)]
-void TestGetDerivativeU (uint3 id : SV_DispatchThreadID)
-{
-    t_InterpolationSet set;
-    set.lowU = _Set[0];
-    set.highU = _Set[1];    
-    set.lowV = _Set[2];
-    set.highV = _Set[3];
-    set.middle = _Set[4];
-    float3 result = GetDerivativeU(set);
-    _Result[0] = result.x;
-    _Result[1] = result.y;
-    _Result[2] = result.z;
-}
-
-[numthreads(1,1,1)]
-void TestGetDerivativeV (uint3 id : SV_DispatchThreadID)
-{
-    t_InterpolationSet set;
-    set.lowU = _Set[0];
-    set.highU = _Set[1];    
-    set.lowV = _Set[2];
-    set.highV = _Set[3];
-    set.middle = _Set[4];
-    float3 result = GetDerivativeV(set);
-    _Result[0] = result.x;
-    _Result[1] = result.y;
-    _Result[2] = result.z;
+    _Result[0] = SampleBuffer(_UvIndex.xy);
 }

@@ -32,8 +32,6 @@ public abstract class GPUPointController
     meshZId = Shader.PropertyToID("_MeshZ"),
     heightId = Shader.PropertyToID("_HeightScale"),
     spectrumDeltaTimeId = Shader.PropertyToID("_SpectrumDeltaTime"),
-    triangleHeightId = Shader.PropertyToID("_TriangleHeight"),
-    triangleWidthId = Shader.PropertyToID("_TriangleWidth"),
     meshResolutionId = Shader.PropertyToID("_MeshResolution");
 
     public GPUPointController( Material material, ComputeShader computeShader, int maxResolution, int depth )
@@ -78,7 +76,7 @@ public abstract class GPUPointController
             int groupsY = Mathf.CeilToInt(depth / 8f);
             computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
             BindToMaterial();     
-            spectrumDeltaTime = (cumulatedDeltaTime % spectrumShiftTime) / spectrumShiftTime;
+            spectrumDeltaTime = (cumulatedDeltaTime % spectrumShiftTime) / (spectrumShiftTime * (depth -1));
                    
         }
         else
@@ -92,12 +90,7 @@ public abstract class GPUPointController
         material.SetFloat(meshXId, meshX);
         material.SetFloat(meshZId, meshZ);
         material.SetFloat(meshResolutionId, (float) meshResolution);
-        float triangleHeight = meshZ / Mathf.Round( meshResolution * meshZ * 2f / Mathf.Sqrt(3f) );
-        float triangleWidth = meshX / Mathf.Round( meshResolution * meshX);
-        material.SetFloat(triangleHeightId, triangleHeight);
-        material.SetFloat(triangleWidthId, triangleWidth);
         material.SetFloat(spectrumDeltaTimeId, spectrumDeltaTime);
-        // Debug.Log("Triangle width: " + triangleWidth + " height: " + triangleHeight);        
     }
 
     protected abstract void SetDebugSpectrogram(int resolution, int depth);

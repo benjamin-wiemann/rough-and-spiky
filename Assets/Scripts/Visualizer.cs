@@ -115,6 +115,11 @@ public class Visualizer : MonoBehaviour
                 meshResolutionOld = meshResolution;
                 meshXOld = meshX;
                 meshZOld = meshZ;
+                LightMovement[] lights = FindObjectsOfType<LightMovement>();
+                foreach( var light in lights)
+                {
+                    light.MeshZ = meshZ;
+                }
             }
         }
     }
@@ -165,7 +170,7 @@ public class Visualizer : MonoBehaviour
 		Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(1);
 		Mesh.MeshData meshData = meshDataArray[0];
 
-		MeshJob<SharedTriangleGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
+		MeshJob<SquareGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
         mesh.RecalculateBounds();
