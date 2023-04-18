@@ -14,16 +14,10 @@ public class LightMovement : MonoBehaviour
     [HideInInspector]
     public float MeshZ{ get; set; }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         Vector3 pos = GetComponent<Transform>().position;
-        GetComponent<Transform>().position = new Vector3(pos.x, pos.y, Mathf.PerlinNoise(Time.time * lightMovementSpeed, 0) * MeshZ + offset);
+        float z = Mathf.PerlinNoise(Time.time * lightMovementSpeed, 0) * MeshZ + offset;
+        GetComponent<Transform>().position = new Vector3(pos.x, pos.y, z);
     }
 }

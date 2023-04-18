@@ -59,6 +59,9 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     bool debugShader = false;
 
+    // [SerializeField]
+    // ProceduralMesh.FunctionLibrary.FunctionName triangleSizeFunction = FunctionLibrary.FunctionName.Rational;
+
     GPUPointController gpuController;
 
     float[] spectrum ;
@@ -82,8 +85,8 @@ public class Visualizer : MonoBehaviour
         meshResolutionOld = meshResolution;
         meshXOld = meshX;
         meshZOld = meshZ;
-
-	}
+        NotifyLights();
+    }
 
 
     void OnDisable()
@@ -115,11 +118,7 @@ public class Visualizer : MonoBehaviour
                 meshResolutionOld = meshResolution;
                 meshXOld = meshX;
                 meshZOld = meshZ;
-                LightMovement[] lights = FindObjectsOfType<LightMovement>();
-                foreach( var light in lights)
-                {
-                    light.MeshZ = meshZ;
-                }
+                NotifyLights();
             }
         }
     }
@@ -165,16 +164,24 @@ public class Visualizer : MonoBehaviour
         spectrum = audioProcessor.GetSpectrumAudioSource();        
     }
 
-
     void GenerateMesh () {
 		Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(1);
 		Mesh.MeshData meshData = meshDataArray[0];
 
-		MeshJob<SquareGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
+		MeshJob<SquareGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, triangleSizeFunction, default).Complete();
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
         mesh.RecalculateBounds();
 	}
+
+    void NotifyLights()
+    {
+        LightMovement[] lights = FindObjectsOfType<LightMovement>();
+        foreach (var light in lights)
+        {
+            light.MeshZ = meshZ;
+        }
+    }
 
 
 }
