@@ -7,6 +7,9 @@ public class FrameRateCounter : MonoBehaviour
     [SerializeField]
     TextMeshProUGUI display;
 
+    [SerializeField]
+    Canvas canvas;
+
     public enum DisplayMode { FPS, MS }
 
     [SerializeField]
@@ -21,6 +24,10 @@ public class FrameRateCounter : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            canvas.enabled = !canvas.enabled;
+        }
         float frameDuration = Time.unscaledDeltaTime;
         frames += 1;
         duration += frameDuration;

@@ -252,6 +252,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   display: {fileID: 112430348}
+  canvas: {fileID: 157490990}
   displayMode: 0
   sampleDuration: 1
 --- !u!114 &112430348
@@ -423,7 +424,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 157490987}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
@@ -537,7 +538,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 0, z: 21}
+  m_LocalPosition: {x: 0, y: 0, z: 26.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -720,7 +721,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lightMovementSpeed: 0.2
-  offset: 3
+  offset: 5
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1513,7 +1514,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 83a7ccf95d925b843b9ed244ac193e64, type: 3}
+  m_audioClip: {fileID: 8300000, guid: a20324f77247c5c4482ec92fe8da8b8d, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 0.363
   m_Pitch: 1
@@ -1646,12 +1647,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spectrumResolution: 128
-  spectrogramDepth: 512
+  spectrogramDepth: 1024
   heightScale: 3
   spectrumShiftTime: 0.015
-  meshResolution: 400
+  meshResolution: 250
   meshX: 2
-  meshZ: 20
+  meshZ: 25
   shaderType: 1
   computeShader: {fileID: 7200000, guid: 91eb292fef05447489f09406963591a6, type: 3}
   audioProcessor: {fileID: 1997742421}

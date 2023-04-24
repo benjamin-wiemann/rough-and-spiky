@@ -168,7 +168,7 @@ public class Visualizer : MonoBehaviour
 		Mesh.MeshDataArray meshDataArray = Mesh.AllocateWritableMeshData(1);
 		Mesh.MeshData meshData = meshDataArray[0];
 
-		MeshJob<SquareGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, triangleSizeFunction, default).Complete();
+		MeshJob<SquareGrid>.ScheduleParallel(mesh, meshData, meshResolution, meshX, meshZ, default).Complete();
 
 		Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, mesh);
         mesh.RecalculateBounds();
