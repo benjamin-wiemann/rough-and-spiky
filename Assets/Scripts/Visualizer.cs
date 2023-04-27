@@ -54,7 +54,7 @@ public class Visualizer : MonoBehaviour
     ComputeShader computeShader;
 
     [SerializeField]
-    AudioProcessor audioProcessor;
+    Audio.AudioProcessor audioProcessor;
 
     [SerializeField]
     bool debugShader = false;
