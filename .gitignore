@@ -9,6 +9,7 @@ Build/
 .vscode/
 .vs/
 .vsconfig/
+.vsconfig
 UserSettings
 **/InitTestScene*
 Assets/Audio/*
