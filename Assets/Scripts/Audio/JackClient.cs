@@ -23,6 +23,9 @@ namespace Audio
         private static extern int jack_activate(IntPtr client);
 
         [DllImport("libjack64.dll")]
+        private static extern int jack_deactivate(IntPtr client);
+
+        [DllImport("libjack64.dll")]
         private static extern IntPtr jack_port_register(
             IntPtr client,
             string portName,
@@ -108,13 +111,18 @@ namespace Audio
         }
 
 
-        public delegate void CallbackDelegate(IntPtr samplesPerFrame, IntPtr arg);
+        public delegate int CallbackDelegate(UInt32 samplesPerFrame, IntPtr arg);
+
+        
 
         public string clientName = "UnityClient";
         public string leftInputPortName = "lInput";
         public string rightInputPortName = "rInput";
 
         public const string inputPortType = "32 bit float mono audio";
+
+        // Hold a reference to the process callback to avoid it to be garbage collected
+        private CallbackDelegate callbackDelegate;
 
         private const UInt32 ringBufferSize = 16384;
         private IntPtr leftRingBuffer;
@@ -132,7 +140,6 @@ namespace Audio
         private void Start()
         {
 
-            //GenerateDummyClip();
             OpenJackClient();
 
         }
@@ -180,9 +187,9 @@ namespace Audio
             leftRingBuffer = jack_ringbuffer_create(sizeof(float) * ringBufferSize);
             rightRingBuffer = jack_ringbuffer_create(sizeof(float) * ringBufferSize);
 
-            //CallbackDelegate callbackDelegate = Process;
-            //IntPtr processCallbackPtr = Marshal.GetFunctionPointerForDelegate(callbackDelegate);
-            //jack_set_process_callback( jackClientPtr, processCallbackPtr, IntPtr.Zero);
+            callbackDelegate = new CallbackDelegate(Process);
+            IntPtr processCallbackPtr = Marshal.GetFunctionPointerForDelegate(callbackDelegate);
+            jack_set_process_callback( jackClientPtr, processCallbackPtr, IntPtr.Zero);
 
             if (jack_activate(jackClientPtr) != 0)
             {
@@ -194,7 +201,7 @@ namespace Audio
                 Debug.Log("Jack client activated.");
             }
 
-            ConnectPorts();
+            //ConnectPorts();
 
             running = true;
 
@@ -286,14 +293,13 @@ namespace Audio
             return portList;
         }
 
-        public void Process(IntPtr nFrames, IntPtr arg)
+        public int Process(UInt32 samplesPerFrame, IntPtr arg)
         {
-            uint samplesPerFrame = bufferSize; // (uint) Marshal.ReadIntPtr(nFrames);
             if (!running)
             {
-                return;
+                return 1;
             }
-            //IntPtr lPortBuffer = jack_port_get_buffer( leftPort, samplesPerFrame);
+            //IntPtr lPortBuffer = jack_port_get_buffer(leftPort, samplesPerFrame);
             //IntPtr rPortBuffer = jack_port_get_buffer( rightPort, samplesPerFrame);
             float[] data = new float[samplesPerFrame];
             for (int i = 0; i < samplesPerFrame; i++)
@@ -316,23 +322,31 @@ namespace Audio
             }
             Marshal.FreeHGlobal(lPortBuffer);
             Marshal.FreeHGlobal(rPortBuffer);
+
+            return 0;
         }
 
         private void OnDestroy()
-        {
-            if (jackClientPtr != IntPtr.Zero)
+        {   
+            if(running)
             {
-                jack_disconnect(jackClientPtr, $"{newClientName}:{leftInputPortName}", $"{newClientName}:{rightInputPortName}");
-                jack_client_close(jackClientPtr);
+                running = false;
+                if (jackClientPtr != IntPtr.Zero)
+                {
+                    jack_disconnect(jackClientPtr, $"{newClientName}:{leftInputPortName}", $"{newClientName}:{rightInputPortName}");
+                    jack_deactivate(jackClientPtr);
+                    jack_client_close(jackClientPtr);
+                }
+                if (leftRingBuffer != IntPtr.Zero)
+                {
+                    jack_ringbuffer_free(leftRingBuffer);
+                }
+                if (rightRingBuffer != IntPtr.Zero)
+                {
+                    jack_ringbuffer_free(rightRingBuffer);
+                }
             }
-            if (leftRingBuffer != IntPtr.Zero)
-            {
-                jack_ringbuffer_free(leftRingBuffer);
-            }
-            if (rightRingBuffer != IntPtr.Zero)
-            {
-                jack_ringbuffer_free(rightRingBuffer);
-            }
+            
         }
 
         void GenerateDummyClip()
@@ -365,18 +379,20 @@ namespace Audio
             }
 
             float[] dest = new float[bufferSize * sizeof(float) * nChannels];
-            Debug.Log($"Ringbuffer read space: {jack_ringbuffer_read_space(leftRingBuffer)} write space: {jack_ringbuffer_write_space(leftRingBuffer)} Needed space: {data.Length * sizeof(float)}");
+            //Debug.Log($"Ringbuffer read space: {jack_ringbuffer_read_space(leftRingBuffer)} write space: {jack_ringbuffer_write_space(leftRingBuffer)} Needed space: {data.Length}");
             if (jack_ringbuffer_read_space(leftRingBuffer) >= data.Length * sizeof(float))
             {
                 IntPtr leftDestPtr = Marshal.AllocHGlobal((int)bufferSize * sizeof(float));
                 jack_ringbuffer_read(leftRingBuffer, leftDestPtr, bufferSize);
                 Marshal.Copy(leftDestPtr, dest, 0, (int)bufferSize);
+                Marshal.FreeHGlobal(leftDestPtr);
             }
             if (jack_ringbuffer_write_space(rightRingBuffer) >= data.Length * sizeof(float))
             {
                 IntPtr rightDestPtr = Marshal.AllocHGlobal((int)bufferSize * sizeof(float));
                 jack_ringbuffer_read(rightRingBuffer, rightDestPtr, bufferSize);
                 Marshal.Copy(rightDestPtr, dest, (int)bufferSize, (int)bufferSize);
+                Marshal.FreeHGlobal(rightDestPtr);
             }
 
             // Put the data samples in alternating order
