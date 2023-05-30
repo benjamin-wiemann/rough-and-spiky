@@ -111,15 +111,19 @@ namespace Audio
         }
 
 
-        public delegate int CallbackDelegate(UInt32 samplesPerFrame, IntPtr arg);
+        private delegate int CallbackDelegate(UInt32 samplesPerFrame, IntPtr arg);
 
-        
 
-        public string clientName = "UnityClient";
-        public string leftInputPortName = "lInput";
-        public string rightInputPortName = "rInput";
+        [SerializeField]
+        string clientName = "UnityClient";
+        [SerializeField]
+        string leftInputPortName = "lInput";
+        [SerializeField]
+        string rightInputPortName = "rInput";
+        [SerializeField]
+        bool testMode = false;
 
-        public const string inputPortType = "32 bit float mono audio";
+        const string inputPortType = "32 bit float mono audio";
 
         // Hold a reference to the process callback to avoid it to be garbage collected
         private CallbackDelegate callbackDelegate;
@@ -136,6 +140,8 @@ namespace Audio
         private IntPtr rightPort;
 
         private bool running = false;
+
+        Helper helper = new Helper();
 
         private void Start()
         {
@@ -189,7 +195,7 @@ namespace Audio
 
             callbackDelegate = new CallbackDelegate(Process);
             IntPtr processCallbackPtr = Marshal.GetFunctionPointerForDelegate(callbackDelegate);
-            jack_set_process_callback( jackClientPtr, processCallbackPtr, IntPtr.Zero);
+            jack_set_process_callback(jackClientPtr, processCallbackPtr, IntPtr.Zero);
 
             if (jack_activate(jackClientPtr) != 0)
             {
@@ -299,18 +305,27 @@ namespace Audio
             {
                 return 1;
             }
-            //IntPtr lPortBuffer = jack_port_get_buffer(leftPort, samplesPerFrame);
-            //IntPtr rPortBuffer = jack_port_get_buffer( rightPort, samplesPerFrame);
-            float[] data = new float[samplesPerFrame];
-            for (int i = 0; i < samplesPerFrame; i++)
+            IntPtr lPortBuffer;
+            IntPtr rPortBuffer;
+            if (!testMode)
             {
-                data[i] = (float)Mathf.Sin((float)i * Mathf.PI / (float)samplesPerFrame);
+                lPortBuffer = jack_port_get_buffer(leftPort, samplesPerFrame);
+                rPortBuffer = jack_port_get_buffer(rightPort, samplesPerFrame);
             }
+            else
+            {
+                // write a simple sine wave to ring buffer
+                float[] data = new float[samplesPerFrame];
+                for (int i = 0; i < samplesPerFrame; i++)
+                {
+                    data[i] = (float)Mathf.Sin((float)i * Mathf.PI * 2 / (float)samplesPerFrame);
+                }
+                rPortBuffer = Marshal.AllocHGlobal((int)samplesPerFrame * sizeof(float));
+                lPortBuffer = Marshal.AllocHGlobal((int)samplesPerFrame * sizeof(float));
 
-            IntPtr lPortBuffer = Marshal.AllocHGlobal((int)samplesPerFrame * sizeof(float));
-            IntPtr rPortBuffer = Marshal.AllocHGlobal((int)samplesPerFrame * sizeof(float));
-            Marshal.Copy(data, 0, lPortBuffer, (int)samplesPerFrame);
-            Marshal.Copy(data, 0, rPortBuffer, (int)samplesPerFrame);
+                Marshal.Copy(data, 0, rPortBuffer, (int)samplesPerFrame);
+                Marshal.Copy(data, 0, lPortBuffer, (int)samplesPerFrame);
+            }            
 
             if (jack_ringbuffer_write_space(leftRingBuffer) >= samplesPerFrame * sizeof(float))
             {
@@ -320,33 +335,33 @@ namespace Audio
             {
                 jack_ringbuffer_write(rightRingBuffer, rPortBuffer, samplesPerFrame * sizeof(float));
             }
-            Marshal.FreeHGlobal(lPortBuffer);
-            Marshal.FreeHGlobal(rPortBuffer);
+            if (testMode)
+            {
+                Marshal.FreeHGlobal(lPortBuffer);
+                Marshal.FreeHGlobal(rPortBuffer);
+            }
 
             return 0;
         }
 
         private void OnDestroy()
         {   
-            if(running)
+            running = false;
+            if (jackClientPtr != IntPtr.Zero)
             {
-                running = false;
-                if (jackClientPtr != IntPtr.Zero)
-                {
-                    jack_disconnect(jackClientPtr, $"{newClientName}:{leftInputPortName}", $"{newClientName}:{rightInputPortName}");
-                    jack_deactivate(jackClientPtr);
-                    jack_client_close(jackClientPtr);
-                }
-                if (leftRingBuffer != IntPtr.Zero)
-                {
-                    jack_ringbuffer_free(leftRingBuffer);
-                }
-                if (rightRingBuffer != IntPtr.Zero)
-                {
-                    jack_ringbuffer_free(rightRingBuffer);
-                }
+                //jack_set_process_callback( jackClientPtr, IntPtr.Zero, IntPtr.Zero);
+                jack_disconnect(jackClientPtr, $"{newClientName}:{leftInputPortName}", $"{newClientName}:{rightInputPortName}");
+                jack_deactivate(jackClientPtr);
+                jack_client_close(jackClientPtr);
             }
-            
+            if (leftRingBuffer != IntPtr.Zero)
+            {
+                jack_ringbuffer_free(leftRingBuffer);
+            }
+            if (rightRingBuffer != IntPtr.Zero)
+            {
+                jack_ringbuffer_free(rightRingBuffer);
+            }            
         }
 
         void GenerateDummyClip()
@@ -367,9 +382,9 @@ namespace Audio
         {
             if (!running)
                 return;
-            if (data.Length != bufferSize)
+            if (data.Length / nChannels != bufferSize)
             {
-                Debug.LogError($"Buffer size ({data.Length}) does not match Jack buffer size ({bufferSize}).");
+                Debug.LogError($"Buffer size ({data.Length / nChannels}) does not match Jack buffer size ({bufferSize}).");
                 return;
             }
             if (nChannels != 2)
@@ -378,35 +393,28 @@ namespace Audio
                 return;
             }
 
-            float[] dest = new float[bufferSize * sizeof(float) * nChannels];
+            float[] left = new float[bufferSize];
+            float[] right = new float[bufferSize];
+            int floatSize = sizeof(float);
             //Debug.Log($"Ringbuffer read space: {jack_ringbuffer_read_space(leftRingBuffer)} write space: {jack_ringbuffer_write_space(leftRingBuffer)} Needed space: {data.Length}");
-            if (jack_ringbuffer_read_space(leftRingBuffer) >= data.Length * sizeof(float))
+            if (jack_ringbuffer_read_space(leftRingBuffer) >= bufferSize * floatSize)
             {
-                IntPtr leftDestPtr = Marshal.AllocHGlobal((int)bufferSize * sizeof(float));
-                jack_ringbuffer_read(leftRingBuffer, leftDestPtr, bufferSize);
-                Marshal.Copy(leftDestPtr, dest, 0, (int)bufferSize);
+                IntPtr leftDestPtr = Marshal.AllocHGlobal((int) bufferSize * floatSize );
+                jack_ringbuffer_read(leftRingBuffer, leftDestPtr, (uint) (bufferSize * floatSize));
+                Marshal.Copy(leftDestPtr, left, 0, (int) bufferSize);
                 Marshal.FreeHGlobal(leftDestPtr);
             }
-            if (jack_ringbuffer_write_space(rightRingBuffer) >= data.Length * sizeof(float))
+            if (jack_ringbuffer_write_space(rightRingBuffer) >= bufferSize * floatSize)
             {
-                IntPtr rightDestPtr = Marshal.AllocHGlobal((int)bufferSize * sizeof(float));
-                jack_ringbuffer_read(rightRingBuffer, rightDestPtr, bufferSize);
-                Marshal.Copy(rightDestPtr, dest, (int)bufferSize, (int)bufferSize);
+                IntPtr rightDestPtr = Marshal.AllocHGlobal((int) bufferSize * floatSize);
+                jack_ringbuffer_read(rightRingBuffer, rightDestPtr, (uint) (bufferSize * floatSize));
+                Marshal.Copy(rightDestPtr, right, 0, (int) bufferSize);
                 Marshal.FreeHGlobal(rightDestPtr);
             }
 
-            // Put the data samples in alternating order
-            for (int i = 0; i < data.Length / 2; i++)
-            {
-                if (i % 2 == 0)
-                    data[i] = dest[i / 2];
-                else
-                    if (i < data.Length)
-                    data[i] = dest[i - 1 + (data.Length / 2)];
-                else
-                    data[i] = dest[i];
-            }
+            helper.Interleave(ref data, left, right);
 
         }
+
     }
 }

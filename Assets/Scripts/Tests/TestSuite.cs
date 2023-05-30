@@ -10,6 +10,28 @@ public class TestSuite
 {
 
     [Test]
+    public void InterleaveIsCorrect()
+    {
+        Audio.Helper helper = new Audio.Helper();
+        float[] inputA = { 0f, 0f, 0f };
+        float[] inputB = { 1f, 1f, 1f }; 
+        float[] output = new float[6];
+        helper.Interleave(ref output, inputA, inputB);
+        Assert.That(output, Is.EqualTo(new float[6] { 0f, 1f, 0f, 1f, 0f, 1f }));
+    }
+
+    //[Test]
+    //public void InterleaveThrowsExceptionOnWrongInputLength()
+    //{
+    //    Audio.Helper helper = new Audio.Helper();
+    //    float[] inputA = { 0f, 0f, 0f };
+    //    float[] inputB = { 1f, 1f, 1f };
+    //    float[] output = new float[6];
+    //    helper.Interleave(ref output, inputA, inputB);
+    //    Assert.That(output, Is.EqualTo(new float[6] { 0f, 1f, 0f, 1f, 0f, 1f }));
+    //}
+
+    [Test]
     public void ComputeFrequencyBandIndices()
     {
         Audio.Helper helper = new Audio.Helper();

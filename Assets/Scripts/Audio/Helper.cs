@@ -72,7 +72,23 @@ namespace Audio
                 dbSignal[i] = 20 * Mathf.Log10( signal[i] );
             }
             return dbSignal;
-        } 
+        }
+
+        public void Interleave(ref float[] dest, float[] inputA, float[] inputB)
+        {
+            // Put the data samples in alternating order
+            for (int i = 0; i < dest.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    dest[i] = inputA[i / 2];
+                }
+                else
+                {
+                    dest[i] = inputB[(i -1) / 2];
+                }
+            }
+        }
 
     }
 
