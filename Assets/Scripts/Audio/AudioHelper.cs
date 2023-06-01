@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Audio
 {
     
-    public class Helper
+    public class AudioHelper
     {
 
         public enum InterpolationType{
@@ -74,7 +74,7 @@ namespace Audio
             return dbSignal;
         }
 
-        public void Interleave(ref float[] dest, float[] inputA, float[] inputB)
+        public void InterleaveChannelBuffers(ref float[] dest, float[] inputA, float[] inputB)
         {
             // Put the data samples in alternating order
             for (int i = 0; i < dest.Length; i++)
