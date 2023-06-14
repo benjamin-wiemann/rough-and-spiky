@@ -113,7 +113,7 @@ Material:
     - _Multiply: 0.7
     - _NeighborDistance: 0.0001
     - _NoiseScale: 100
-    - _NumClones: 4
+    - _NumClones: 2
     - _OcclusionStrength: 1
     - _Offset: 150
     - _Parallax: 0.005

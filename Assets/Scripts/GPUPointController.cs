@@ -21,10 +21,8 @@ public abstract class GPUPointController
     protected ReadFromBuffer readFromBuffer = ReadFromBuffer.A;
 
     protected float cumulatedDeltaTime = 0;
-    
+
     protected static readonly int
-    spectrogramId = Shader.PropertyToID("_Spectrogram"),
-    prevSpectrogramId = Shader.PropertyToID("_PrevSpectrogram"),
     resolutionId = Shader.PropertyToID("_Resolution"),
     indexOffsetId = Shader.PropertyToID("_IndexOffset"),
     depthId = Shader.PropertyToID("_Depth"),
@@ -32,9 +30,12 @@ public abstract class GPUPointController
     meshZId = Shader.PropertyToID("_MeshZ"),
     heightId = Shader.PropertyToID("_HeightScale"),
     spectrumDeltaTimeId = Shader.PropertyToID("_SpectrumDeltaTime"),
-    meshResolutionId = Shader.PropertyToID("_MeshResolution");
+    meshResolutionId = Shader.PropertyToID("_MeshResolution"),
+    spectrogramId = Shader.PropertyToID("_Spectrogram"),
+    prevSpectrogramId = Shader.PropertyToID("_PrevSpectrogram");
 
-    public GPUPointController( Material material, ComputeShader computeShader, int maxResolution, int depth )
+
+    public GPUPointController( Material material, ComputeShader computeShader, int nFreqBands, int depth )
     {
         this.material = material;
         this.computeShader = computeShader;
@@ -48,14 +49,14 @@ public abstract class GPUPointController
     public abstract void ReleaseBuffers();
     
     public void UpdatePointPosition(
-        int spectrumResolution,
+        int nFreqBands,
         int depth, 
         float spectrumShiftTime, 
         float heightScale,
         int meshResolution, 
         float meshX,
         float meshZ,
-        float[] spectrum, 
+        float[] spectrum,
         Mesh mesh,
         bool debug)
     {
@@ -67,12 +68,12 @@ public abstract class GPUPointController
             cumulatedDeltaTime += Time.deltaTime;
             int indexOffset = Mathf.FloorToInt(cumulatedDeltaTime / spectrumShiftTime);
 
-            computeShader.SetInt(resolutionId, spectrumResolution);
+            computeShader.SetInt(resolutionId, nFreqBands);
             computeShader.SetInt(indexOffsetId, indexOffset);
             computeShader.SetInt(depthId, depth);
             SendSpectrumToShader(computeShader, depth, spectrumShiftTime, spectrum, kernelHandle, indexOffset);
 
-            int groupsX = Mathf.CeilToInt(spectrumResolution / 8f);
+            int groupsX = Mathf.CeilToInt(nFreqBands / 8f);
             int groupsY = Mathf.CeilToInt(depth / 8f);
             computeShader.Dispatch(kernelHandle, groupsX, groupsY, 1);
             BindToMaterial();     
@@ -81,10 +82,10 @@ public abstract class GPUPointController
         }
         else
         {
-            SetDebugSpectrogram(spectrumResolution, depth);
+            SetDebugSpectrogram(nFreqBands, depth);
             spectrumDeltaTime = 0;
         }
-        material.SetInteger(resolutionId, spectrumResolution);
+        material.SetInteger(resolutionId, nFreqBands);
         material.SetInteger(depthId, depth);
         material.SetFloat(heightId, heightScale);
         material.SetFloat(meshXId, meshX);
@@ -96,7 +97,13 @@ public abstract class GPUPointController
     protected abstract void SetDebugSpectrogram(int resolution, int depth);
 
 
-    protected abstract void SendSpectrumToShader(ComputeShader computeShader, int depth, float spectrumShiftTime, float[] spectrum, int kernelHandle, int indexOffset);
+    protected abstract void SendSpectrumToShader(
+        ComputeShader computeShader, 
+        int depth, 
+        float spectrumShiftTime, 
+        float[] spectrum, 
+        int kernelHandle, 
+        int indexOffset);
     
 
     protected abstract void BindToMaterial();

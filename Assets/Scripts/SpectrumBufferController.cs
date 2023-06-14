@@ -7,10 +7,11 @@ internal class SpectrumBufferController : GPUPointController
 
     ComputeBuffer positionsBufferB;
 
-    public SpectrumBufferController(Material material, ComputeShader computeShader, int maxResolution, int depth) : base(material, computeShader, maxResolution, depth)
+    public SpectrumBufferController(Material material, ComputeShader computeShader, int nFreqBands, int depth) : 
+        base(material, computeShader, nFreqBands, depth)
     {
-        positionsBufferA = new ComputeBuffer(maxResolution * ( depth), 4);
-        positionsBufferB = new ComputeBuffer(maxResolution * ( depth), 4);
+        positionsBufferA = new ComputeBuffer(nFreqBands * ( depth), 4);
+        positionsBufferB = new ComputeBuffer(nFreqBands * ( depth), 4);
     }
 
     protected override void BindToMaterial()

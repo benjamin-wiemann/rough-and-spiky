@@ -12,52 +12,41 @@ public class TestSuite
     [Test]
     public void InterleaveIsCorrect()
     {
-        Audio.Helper helper = new Audio.Helper();
+        Audio.AudioHelper helper = new Audio.AudioHelper();
         float[] inputA = { 0f, 0f, 0f };
         float[] inputB = { 1f, 1f, 1f }; 
         float[] output = new float[6];
-        helper.Interleave(ref output, inputA, inputB);
+        helper.InterleaveChannelBuffers(ref output, inputA, inputB);
         Assert.That(output, Is.EqualTo(new float[6] { 0f, 1f, 0f, 1f, 0f, 1f }));
     }
-
-    //[Test]
-    //public void InterleaveThrowsExceptionOnWrongInputLength()
-    //{
-    //    Audio.Helper helper = new Audio.Helper();
-    //    float[] inputA = { 0f, 0f, 0f };
-    //    float[] inputB = { 1f, 1f, 1f };
-    //    float[] output = new float[6];
-    //    helper.Interleave(ref output, inputA, inputB);
-    //    Assert.That(output, Is.EqualTo(new float[6] { 0f, 1f, 0f, 1f, 0f, 1f }));
-    //}
 
     [Test]
     public void ComputeFrequencyBandIndices()
     {
-        Audio.Helper helper = new Audio.Helper();
+        Audio.AudioHelper helper = new Audio.AudioHelper();
         int rawSpectrumLength = 4;
         int numBands = 3;
         float[] testIndices = new float[] { 0f, 0.59f, 1.52f, 3f };
         float[] indices = helper.ComputeFrequencyBandIndices(rawSpectrumLength, numBands);
         Assert.That(indices, Is.EqualTo(testIndices).Within(0.01));
-
     }
 
     [Test]
     public void ComputeFrequencyBandAmplitudesWithIntegerIndices()
     {
-        Audio.Helper helper = new Audio.Helper();
+        Audio.AudioHelper helper = new Audio.AudioHelper();
 
         float[] linearSpectrum = new float[]{
              1f,1f,1f,1f,1f,1f,1f,1f
         };
         float[] integerIndices = new float[] { 0f, 1f, 3f, 7f };
-        float[] bands = helper.ComputeFrequencyBands(linearSpectrum, integerIndices, Audio.Helper.InterpolationType.Linear);
+        float[] bands = new float[3];
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, integerIndices, Audio.AudioHelper.InterpolationType.Linear, false, false);
         Assert.That(bands, Is.EqualTo(new float[3] { 1f, 1f, 1f }));
         linearSpectrum = new float[]{
             0,0,0,1f,1f,1f,1f,1f
         };
-        bands = helper.ComputeFrequencyBands(linearSpectrum, integerIndices, Audio.Helper.InterpolationType.Linear);
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, integerIndices, Audio.AudioHelper.InterpolationType.Linear, false, false);
         Assert.That(bands, Is.EqualTo(new float[3] { 0, 0, 1 }));
 
     }
@@ -65,14 +54,38 @@ public class TestSuite
     [Test]
     public void ComputeFrequencyBandAmplitudesWithFloatIndices()
     {
-        Audio.Helper helper = new Audio.Helper();
+        Audio.AudioHelper helper = new Audio.AudioHelper();
 
         float[] linearSpectrum = new float[]{
             0,1f,1f,1f
         };
         float[] testIndices = new float[] { 0f, 0.5f, 1.5f, 3f };
-        float[] bands = helper.ComputeFrequencyBands(linearSpectrum, testIndices, Audio.Helper.InterpolationType.Linear);
+        float[] bands = new float[3];
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, testIndices, Audio.AudioHelper.InterpolationType.Linear, false, false);
         Assert.That(bands, Is.EqualTo(new float[3] { 0.5f, (0.5f * 0.5f) + (1 * 0.5f), 1f }));
+
+    }
+
+    [Test]
+    public void ComputeFrequencyBandsWritesToCorrectIndices()
+    {
+        Audio.AudioHelper helper = new Audio.AudioHelper();
+        float[] linearSpectrum = new float[]{
+            1f,1f,1f,1f
+        };
+        float[] testIndices = new float[] { 0f, 1f, 2f, 3f, 4f };
+        float[] bands = new float[8];
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, testIndices, Audio.AudioHelper.InterpolationType.Linear, false, false);
+        Assert.That(bands, Is.EqualTo(new float[8] { 1f, 1f, 1f, 1f, 0, 0, 0, 0 }));
+        bands = new float[8];
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, testIndices, Audio.AudioHelper.InterpolationType.Linear, true, false);
+        Assert.That(bands, Is.EqualTo(new float[8] { 0, 0, 0, 0, 1f, 1f, 1f, 1f }));
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, testIndices, Audio.AudioHelper.InterpolationType.Linear, false, false);
+        Assert.That(bands, Is.EqualTo(new float[8] { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f }));
+        bands = new float[8];
+        linearSpectrum = new float[] { 1f, 2f, 3f, 4f };
+        helper.ComputeFrequencyBands(ref bands, linearSpectrum, testIndices, Audio.AudioHelper.InterpolationType.Linear, false, true);
+        Assert.That(bands, Is.EqualTo(new float[8] { 4f, 3f, 2f, 1f, 0, 0, 0, 0 }));
 
     }
 

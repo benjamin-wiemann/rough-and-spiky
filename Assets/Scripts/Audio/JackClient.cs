@@ -128,7 +128,7 @@ namespace Audio
         // Hold a reference to the process callback to avoid it to be garbage collected
         private CallbackDelegate callbackDelegate;
 
-        private const UInt32 ringBufferSize = 16384;
+        private const UInt32 ringBufferSize = 1024;
         private IntPtr leftRingBuffer;
         private IntPtr rightRingBuffer;
 
@@ -141,7 +141,7 @@ namespace Audio
 
         private bool running = false;
 
-        Helper helper = new Helper();
+        AudioHelper helper = new AudioHelper();
 
         private void Start()
         {
@@ -152,6 +152,7 @@ namespace Audio
 
         private void OpenJackClient()
         {
+            //AudioListener.volume = 0f;
             JackStatus status;
             jackClientPtr = jack_client_open(clientName, JackOptions.JackNullOption, out status);
 
@@ -364,20 +365,6 @@ namespace Audio
             }            
         }
 
-        void GenerateDummyClip()
-        {
-            AudioClip clip = AudioClip.Create("clip", (int)bufferSize, 1, (int)jack_get_sample_rate(jackClientPtr), false);
-            AudioSource source = GetComponent<AudioSource>();
-
-            float[] samples = new float[bufferSize];
-            System.Array.Clear(samples, 0, samples.Length);
-            clip.SetData(samples, 0);
-
-            source.clip = clip;
-            source.loop = true;
-            source.Play();
-        }
-
         private void OnAudioFilterRead(float[] data, int nChannels)
         {
             if (!running)
@@ -396,7 +383,6 @@ namespace Audio
             float[] left = new float[bufferSize];
             float[] right = new float[bufferSize];
             int floatSize = sizeof(float);
-            //Debug.Log($"Ringbuffer read space: {jack_ringbuffer_read_space(leftRingBuffer)} write space: {jack_ringbuffer_write_space(leftRingBuffer)} Needed space: {data.Length}");
             if (jack_ringbuffer_read_space(leftRingBuffer) >= bufferSize * floatSize)
             {
                 IntPtr leftDestPtr = Marshal.AllocHGlobal((int) bufferSize * floatSize );
@@ -404,7 +390,7 @@ namespace Audio
                 Marshal.Copy(leftDestPtr, left, 0, (int) bufferSize);
                 Marshal.FreeHGlobal(leftDestPtr);
             }
-            if (jack_ringbuffer_write_space(rightRingBuffer) >= bufferSize * floatSize)
+            if (jack_ringbuffer_read_space(rightRingBuffer) >= bufferSize * floatSize)
             {
                 IntPtr rightDestPtr = Marshal.AllocHGlobal((int) bufferSize * floatSize);
                 jack_ringbuffer_read(rightRingBuffer, rightDestPtr, (uint) (bufferSize * floatSize));
@@ -412,7 +398,7 @@ namespace Audio
                 Marshal.FreeHGlobal(rightDestPtr);
             }
 
-            helper.Interleave(ref data, left, right);
+            helper.InterleaveChannelBuffers(ref data, left, right);
 
         }
 
