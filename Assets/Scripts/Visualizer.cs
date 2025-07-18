@@ -11,18 +11,23 @@ public class Visualizer : MonoBehaviour
 
     public enum ShaderType { Texture, ComputeBuffer }
 
+
     const int maxResolution = 4096;
 
 
     // Number of samples in a spectrum
     [SerializeField, Range(2, maxResolution)]
-    public int spectrumResolution = 512;
-    int spectrumResolutionOld;
+    public int nFreqBandsPerSpectrum = 512;
+    int nFreqBandsPerSpectrumOld;
 
     // Number of spectrums in the spectrogram
     [SerializeField, Range(2, 8192)]
     int spectrogramDepth = 512;
     int spectrogramDepthOld;
+
+    [SerializeField]
+    public Audio.Channel channelMapping = Audio.Channel.StereoMirrorAtLow;
+    Audio.Channel channelMappingOld;
 
     [SerializeField, Range(0f, 10f)]
     float heightScale = 1f;
@@ -59,12 +64,12 @@ public class Visualizer : MonoBehaviour
     [SerializeField]
     bool debugShader = false;
 
-    // [SerializeField]
-    // ProceduralMesh.FunctionLibrary.FunctionName triangleSizeFunction = FunctionLibrary.FunctionName.Rational;
 
     GPUPointController gpuController;
 
-    float[] spectrum ;
+    float[] spectrum;
+
+    int nFreqBands;
 
     bool spectrogramChanged = true;
 
@@ -81,7 +86,7 @@ public class Visualizer : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh;
 
         spectrogramDepthOld = spectrogramDepth;
-        spectrumResolutionOld = spectrumResolution;
+        nFreqBandsPerSpectrumOld = nFreqBandsPerSpectrum;
         meshResolutionOld = meshResolution;
         meshXOld = meshX;
         meshZOld = meshZ;
@@ -104,11 +109,13 @@ public class Visualizer : MonoBehaviour
         if (enabled)
         {
             if( spectrogramDepthOld != spectrogramDepth 
-            || spectrumResolutionOld != spectrumResolution)
+            || nFreqBandsPerSpectrumOld != nFreqBandsPerSpectrum
+            || channelMapping != channelMappingOld)
             {
                 spectrogramChanged = true;
                 spectrogramDepthOld = spectrogramDepth;
-                spectrumResolutionOld = spectrumResolution;
+                nFreqBandsPerSpectrumOld = nFreqBandsPerSpectrum;
+                channelMappingOld = channelMapping;
             }
             if( meshResolutionOld != meshResolution 
             || meshXOld != meshX 
@@ -125,17 +132,25 @@ public class Visualizer : MonoBehaviour
 
     void Update()
     {
-        if( spectrogramChanged )
+        if ( spectrogramChanged )
         {
-            spectrum = new float[spectrumResolution];
-            audioProcessor.Initialize(spectrumResolution);     
+            if(channelMapping == Audio.Channel.Left ||  channelMapping == Audio.Channel.Right )
+            {
+                nFreqBands = nFreqBandsPerSpectrum;
+            }
+            else
+            {
+                nFreqBands = nFreqBandsPerSpectrum * 2;
+            }
+            spectrum = new float[nFreqBands];
+            audioProcessor.Initialize(nFreqBandsPerSpectrum, channelMapping);     
             switch( shaderType )      
             {
                 case ShaderType.ComputeBuffer:
-                    gpuController = new SpectrumBufferController(  GetComponent<MeshRenderer>().material, computeShader, spectrumResolution, spectrogramDepth);
+                    gpuController = new SpectrumBufferController(  GetComponent<MeshRenderer>().material, computeShader, nFreqBands, spectrogramDepth);
                     break;
                 case ShaderType.Texture:
-                    gpuController = new SpectrumTextureController(  GetComponent<MeshRenderer>().material, computeShader, spectrumResolution, spectrogramDepth);
+                    gpuController = new SpectrumTextureController(  GetComponent<MeshRenderer>().material, computeShader, nFreqBands, spectrogramDepth);
                     break;
             } 
             spectrogramChanged = false;
@@ -146,22 +161,18 @@ public class Visualizer : MonoBehaviour
             meshChanged = false;
 
         }
+        audioProcessor.GetSpectrumAudioSource(ref spectrum, channelMapping);
         gpuController.UpdatePointPosition( 
-            spectrumResolution, 
+            nFreqBands, 
             spectrogramDepth, 
             spectrumShiftTime, 
             heightScale, 
             meshResolution,
             meshX, 
             meshZ, 
-            spectrum,            
+            spectrum,
             mesh,
             debugShader);
-    }
-
-    void FixedUpdate()
-    {
-        spectrum = audioProcessor.GetSpectrumAudioSource();        
     }
 
     void GenerateMesh () {

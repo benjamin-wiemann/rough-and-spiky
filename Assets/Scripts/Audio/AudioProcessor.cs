@@ -1,53 +1,97 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-namespace Audio{
+namespace Audio
+{
 
-    [RequireComponent (typeof (AudioSource))]
+    public enum Channel
+    {
+        Left = 0,
+        Right = 1,
+        Stereo = 2,
+        StereoMirrorAtLow = 3,
+        StereoMirrorAtHigh = 4
+    }
+
+    [RequireComponent(typeof(AudioSource))]
     public class AudioProcessor : MonoBehaviour
     {
-        
+
         [SerializeField]
         private Visualizer visualizer;
 
         [SerializeField]
-        private Helper.InterpolationType interpolation = Helper.InterpolationType.Linear;
+        private AudioHelper.InterpolationType interpolationType = AudioHelper.InterpolationType.Linear;
+
+        readonly int spectrumLength = 512;
 
         private AudioSource _audioSource;
 
-        private float[] _spectrum = new float[512];
+        float[] spectrum;
 
-        private float[] _freqBandIndices;
-        public float[] _freqBands;
+        float[] freqBandIndices;
+        float[] freqBands;
+        float[] freqBandsStereo;
 
-        Helper helper = new Helper();
-
-
-        // int resolution
+        AudioHelper helper = new AudioHelper();
 
         void OnEnable()
         {
-            _audioSource = GetComponent<AudioSource> ();
-            Initialize( visualizer.spectrumResolution );           
+            _audioSource = GetComponent<AudioSource>();
         }
 
-        void OnDisable()
+        public void Initialize(int nFreqBandsPerSpectrum, Channel channel)
         {
+            spectrum = new float[spectrumLength];
+            if(channel == Channel.Left || channel == Channel.Right)
+            {
+                freqBands = new float[nFreqBandsPerSpectrum];
+            }
+            else
+            {
+                freqBands = new float[nFreqBandsPerSpectrum * 2];
+            }
             
+            freqBandIndices = helper.ComputeFrequencyBandIndices(spectrumLength, nFreqBandsPerSpectrum);
         }
 
-        public void Initialize( int resolution)
-        {
-            _freqBands = new float[resolution];
-            _freqBandIndices = helper.ComputeFrequencyBandIndices(_spectrum.Length, resolution);
-        }
+        public void GetSpectrumAudioSource(ref float[] dbSpectrum, Channel channel)
+        {         
+            
+            switch (channel)
+            {
+                case Channel.Left:
+                    _audioSource.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, false, false);
+                    break;
+                case Channel.Right:
+                    _audioSource.GetSpectrumData(spectrum, 1, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, false, false);
+                    break;
+                case Channel.Stereo:
+                    _audioSource.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, false, false);
+                    _audioSource.GetSpectrumData(spectrum, 1, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, true, false);           
+                    break;
+                case Channel.StereoMirrorAtLow:
+                    _audioSource.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, false, true);
+                    _audioSource.GetSpectrumData(spectrum, 1, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, true, false);
+                    break;
+                case Channel.StereoMirrorAtHigh:
+                    _audioSource.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, false, false);
+                    _audioSource.GetSpectrumData(spectrum, 1, FFTWindow.BlackmanHarris);
+                    helper.ComputeFrequencyBands(ref freqBands, spectrum, freqBandIndices, interpolationType, true, true);
+                    break;
 
-        public float[] GetSpectrumAudioSource()
-        {
-            _audioSource.GetSpectrumData( _spectrum, 0, FFTWindow.BlackmanHarris );        
-            _freqBands = helper.ComputeFrequencyBands( _spectrum, _freqBandIndices, interpolation );
-            return helper.ConvertToDb( _freqBands );
+            }
+            helper.ConvertToDb(ref dbSpectrum, freqBands);
         }
 
     }

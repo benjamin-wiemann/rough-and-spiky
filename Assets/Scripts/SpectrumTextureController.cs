@@ -12,16 +12,16 @@ internal class SpectrumTextureController : GPUPointController
     spectrogramTextureId = Shader.PropertyToID("_SpectrogramTexture"),
     debugBufferId = Shader.PropertyToID("_DebugBuffer");
 
-    public SpectrumTextureController(Material material, ComputeShader computeShader, int resolution, int depth) : base(material, computeShader, resolution, depth)
+    public SpectrumTextureController(Material material, ComputeShader computeShader, int nFreqBands, int depth) : base(material, computeShader, nFreqBands, depth)
     {
 
-        textureA = new RenderTexture(resolution, depth, 0, RenderTextureFormat.RFloat);
+        textureA = new RenderTexture(nFreqBands, depth, 0, RenderTextureFormat.RFloat);
         textureA.enableRandomWrite = true;
         textureA.Create();
-        textureB = new RenderTexture(resolution, depth, 0, RenderTextureFormat.RFloat);
+        textureB = new RenderTexture(nFreqBands, depth, 0, RenderTextureFormat.RFloat);
         textureB.enableRandomWrite = true;
         textureB.Create(); 
-        spectrumBuffer = new ComputeBuffer(resolution, 4); 
+        spectrumBuffer = new ComputeBuffer(nFreqBands, 4); 
     }
 
     public override void ReleaseBuffers()
@@ -43,13 +43,13 @@ internal class SpectrumTextureController : GPUPointController
         }
     }
 
-    protected override void SetDebugSpectrogram( int resolution, int depth )
+    protected override void SetDebugSpectrogram( int nFreqBands, int depth )
     {
         int debugSpectrumKernel = computeShader.FindKernel("SetDebugSpectrogram");
         computeShader.SetTexture(debugSpectrumKernel, spectrogramId, textureA);
-        computeShader.SetInt(resolutionId, resolution);
+        computeShader.SetInt(resolutionId, nFreqBands);
         computeShader.SetInt(depthId, depth);
-        int groupsX = Mathf.CeilToInt(resolution / 8f);
+        int groupsX = Mathf.CeilToInt(nFreqBands / 8f);
         int groupsY = Mathf.CeilToInt(depth / 8f);
         computeShader.Dispatch(debugSpectrumKernel, groupsX, groupsY, 1);
         material.SetTexture(spectrogramTextureId, textureA);
